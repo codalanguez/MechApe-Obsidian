@@ -55,7 +55,7 @@ export function makeRequest(provider: Provider, connection: Connection, system: 
     if (tools.length) body.tools = tools.map(t => ({ name: t.name, description: t.description, input_schema: t.parameters }));
   } else {
     if (connection.apiKey) headers.Authorization = `Bearer ${connection.apiKey}`;
-    if (provider === 'openrouter') { headers['HTTP-Referer'] = 'https://github.com/codalanguez/MechApe'; headers['X-Title'] = 'MechApe for Obsidian'; }
+    if (provider === 'openrouter') { headers['HTTP-Referer'] = 'https://github.com/codalanguez/MechApe-Obsidian'; headers['X-Title'] = 'MechApe for Obsidian'; }
     path = provider === 'ollama' ? '/api/chat' : '/chat/completions';
     body = { model: connection.model, stream: false, messages: [{ role: 'system', content: system }, ...wireMessages(provider, messages)] };
     if (provider === 'ollama') body.options = { num_predict: 4096 };

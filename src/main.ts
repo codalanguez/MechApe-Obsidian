@@ -110,7 +110,7 @@ class ChatView extends ItemView {
     this.sendButton = toolbar.createEl('button', { text: 'Send', cls: 'mod-cta' }); this.sendButton.onclick = () => { void this.submit(); };
     bottom.createEl('div', { text: 'Enter to send · Shift+Enter for a new line', cls: 'mechape-hint' });
     const larger = bottom.createDiv('mechape-larger');
-    larger.createEl('a', { text: 'Larger experience: MechApe', href: 'https://github.com/codalanguez/MechApe', attr: { target: '_blank', rel: 'noopener noreferrer' } });
+    larger.createEl('a', { text: 'Larger experience: MechApe', href: 'https://codalanguez.com/mechape/', attr: { target: '_blank', rel: 'noopener noreferrer' } });
     this.registerEvent(this.app.workspace.on('active-leaf-change', leaf => { if (leaf === this.leaf && !this.controller) this.renderControls(); }));
   }
   private renderControls(): void {
@@ -252,6 +252,6 @@ class MechApeSettings extends PluginSettingTab {
     el.createEl('p', { text: 'Chats stay in memory until you choose Save. API replies arrive as complete messages. Stop prevents further actions, but an already-sent provider request may continue processing.', cls: 'mechape-muted' });
     new Setting(el).setName('Larger experience').setHeading();
     el.createEl('p', { text: 'Explore the full MechApe studio for a dedicated project workspace, local model management, and a larger chat experience.' });
-    el.createEl('a', { text: 'Get the full MechApe app', href: 'https://github.com/codalanguez/MechApe', attr: { target: '_blank', rel: 'noopener noreferrer' } });
+    el.createEl('a', { text: 'Get the full MechApe app', href: 'https://codalanguez.com/mechape/', attr: { target: '_blank', rel: 'noopener noreferrer' } });
   }
 }
