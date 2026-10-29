@@ -26,6 +26,8 @@ Upload individual `main.js`, `manifest.json`, and `styles.css` files from the ve
 
 ## Publishing boundary
 
+**Submission is on hold for the desktop commercial-readiness review.** The free plugin remains independent of any future paid desktop edition. Its README discloses the promotional larger-experience link and separate pricing. Payment enforcement in the desktop app is not a prerequisite for this plugin's existing features.
+
 The public repository and matching [0.1.1 GitHub release](https://github.com/codalanguez/MechApe-Obsidian/releases/tag/0.1.1) are ready for submission. The release includes the required individual assets and is published with the Anthropic billing limitation documented. Anthropic model discovery succeeded; successful chat and note-tool testing remains blocked by insufficient credits on the test account. Directory account linking and the actual community submission are separate steps; no community submission has occurred. Include the live-testing limitations from TESTING.md when reviewing the release.
 
 Sign in at https://community.obsidian.md, link the GitHub account that owns the repository, and add `codalanguez/MechApe-Obsidian`. Confirm plugin ID availability and address any automated review findings before directory publication.

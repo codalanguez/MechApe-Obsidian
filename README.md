@@ -58,6 +58,8 @@ For Ollama, start Ollama and install a model that supports tools. For an OpenAI-
 
 For cloud APIs, model access and billing are handled by the provider. A consumer chat subscription may not include API credit. The plugin itself has no subscription, paywall, telemetry, or account service.
 
+The **Larger experience: MechApe** link promotes the author's separate desktop app. Using this Obsidian plugin does not require installing or buying that app. The desktop app's pricing and license are independent of this plugin; a future paid desktop edition would not change this plugin's MIT license or require a desktop purchase to use its existing features. No desktop purchase or license activation is implemented in the plugin.
+
 **Testing status:** Ollama, an OpenAI-compatible endpoint, and OpenRouter have passed live note-tool tests. Anthropic authenticated model discovery succeeds, but chat testing is blocked by insufficient API credits on the test account; its tool protocol remains fixture-tested. See [TESTING.md](TESTING.md) for exact coverage and platform limitations.
 
 If a model does not support tool calling, disable **Enable note tools**. You can still chat and attach a note. API replies currently appear as complete messages rather than token-by-token streaming.
