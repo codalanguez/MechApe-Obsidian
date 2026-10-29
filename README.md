@@ -31,9 +31,11 @@ Skills work as reusable system instructions. Select one from the sidebar; edit, 
 
 Each profile has a name, instructions, and an enforced permission controlling write tools. These are prompt profiles, not executable scripts. Every write still requires review. Changing skill, provider, model, project, or access settings starts fresh model context so old project content does not silently carry across those boundaries.
 
-## Install the development release
+## Install the release
 
 This plugin has **not yet been published in the community directory**.
+
+Download the assets or installation ZIP from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases/latest). Community-directory installation will become available only after submission and review.
 
 1. Build with `npm ci` and `npm run package`, or obtain the three release assets.
 2. Copy the `dist/mechape` folder into `<your-vault>/.obsidian/plugins/` (or the equivalent plugins directory if you use a custom configuration folder).
@@ -55,6 +57,8 @@ Requires Obsidian 1.14.5 or later. The initial release is marked **desktop-only*
 For Ollama, start Ollama and install a model that supports tools. For an OpenAI-compatible server such as LM Studio or llama.cpp, enable its server and enter its actual base URL and loaded model ID. The model field is intentionally empty until you select a model available to you. Provider model names and availability vary.
 
 For cloud APIs, model access and billing are handled by the provider. A consumer chat subscription may not include API credit. The plugin itself has no subscription, paywall, telemetry, or account service.
+
+**Testing status:** Ollama and an OpenAI-compatible endpoint have passed live local tests. OpenRouter and Anthropic have protocol tests but have not yet been tested with live credentials. See [TESTING.md](TESTING.md) for exact coverage and platform limitations.
 
 If a model does not support tool calling, disable **Enable note tools**. You can still chat and attach a note. API replies currently appear as complete messages rather than token-by-token streaming.
 

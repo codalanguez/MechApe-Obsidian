@@ -9,7 +9,7 @@
 - **Description:** A sidebar AI companion with Ollama, OpenRouter, Anthropic, skill profiles, and project-aware note tools.
 - **Version/tag:** `0.1.0`
 - **Minimum Obsidian:** `1.14.5`
-- **Repository:** https://github.com/codalanguez/MechApe-Obsidian (private during testing)
+- **Repository:** https://github.com/codalanguez/MechApe-Obsidian
 - **License:** MIT
 
 ## Release description
@@ -26,4 +26,4 @@ Upload individual `main.js`, `manifest.json`, and `styles.css` files from the ve
 
 ## Publishing boundary
 
-The source repository is private during testing, with a draft release prepared for review. Making the source repository public, publishing the matching GitHub release, and directory account linking are still required. No community submission has occurred.
+Use the public repository and matching `0.1.0` GitHub release for submission. Directory account linking and the actual community submission are separate steps; no community submission has occurred. Include the live-testing limitations from TESTING.md when reviewing the release.
