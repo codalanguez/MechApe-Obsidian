@@ -1,0 +1,13 @@
+{
+  "source": "MechApe desktop lib/core",
+  "license": "MIT",
+  "files": {
+    "openrouter.js": "01fe9bd7e6bcfa116cf50c5e63e47910f92cf886ee7d6f1679c571a7763c79ff",
+    "openrouter.d.ts": "a64feef57cd25b5ee82b14884c5efab9cad4e343f757a08c4e0aaf50489ab074",
+    "skills.js": "4b9dff7981dee786fd5caae37d04749112040bc9c1197b1d63e7452b0e347145",
+    "skills.d.ts": "3f87a096aa8f668a1ebec0bcc310790c59b458d04779eb7b8375c8787653b995",
+    "prompt.js": "d6d459b3267e33c6178137a97766bfdf68cc95ba07b7934b0bc5530a8e73b5c3",
+    "prompt.d.ts": "73f7698c5097c3725171e3b1fdb0206598399ef035fdc3cc5cb32b405e9a8d70",
+    "LICENSE": "f24893593011fad5726ed50902af751f4a4bed8828f4723f36aa7a8e4a3ab9bf"
+  }
+}

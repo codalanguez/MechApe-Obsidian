@@ -2,7 +2,9 @@
 
 A small AI companion in your vault's right sidebar. Chat with local models through Ollama, bring an OpenRouter or Anthropic API key, or connect an OpenAI-compatible endpoint. Find notes, develop drafts, and turn project conversations into reviewed note changes.
 
-An offshoot of [MechApe](https://codalanguez.com/mechape/), by Coda Languez. **Want a larger experience?** The [full MechApe app](https://codalanguez.com/mechape/) offers a dedicated studio with projects and local model management. The sidebar includes a direct link. This plugin runs independently; the full app is not required.
+The free Obsidian edition of [MechApe](https://codalanguez.com/mechape/), by Coda Languez. **Want a larger experience?** The [full MechApe app](https://codalanguez.com/mechape/) offers a dedicated studio with projects and local model management. The sidebar includes a direct link. This plugin runs independently; the full app is not required.
+
+Both editions use the same portable MechApe core for prompt composition, skill parsing, and OpenRouter requests. Obsidian supplies the sidebar and vault; the standalone app supplies its own workspace and larger toolset. See [shared-core architecture](SHARED-CORE.md).
 
 ## Features
 

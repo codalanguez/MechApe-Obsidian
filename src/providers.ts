@@ -1,3 +1,4 @@
+import { buildChatPayload, headers as openRouterHeaders } from './core/openrouter';
 import type { Connection, Provider } from './config';
 export interface ToolDefinition { name: string; description: string; parameters: Record<string, unknown> }
 export interface ToolCall { id: string; name: string; arguments: Record<string, unknown> }
@@ -55,9 +56,15 @@ export function makeRequest(provider: Provider, connection: Connection, system: 
     if (tools.length) body.tools = tools.map(t => ({ name: t.name, description: t.description, input_schema: t.parameters }));
   } else {
     if (connection.apiKey) headers.Authorization = `Bearer ${connection.apiKey}`;
-    if (provider === 'openrouter') { headers['HTTP-Referer'] = 'https://github.com/codalanguez/MechApe-Obsidian'; headers['X-Title'] = 'MechApe for Obsidian'; }
+    if (provider === 'openrouter') Object.assign(headers, openRouterHeaders(connection.apiKey));
     path = provider === 'ollama' ? '/api/chat' : '/chat/completions';
     body = { model: connection.model, stream: false, messages: [{ role: 'system', content: system }, ...wireMessages(provider, messages)] };
+    if (provider === 'openrouter') {
+      const payload = buildChatPayload({ model: connection.model, messages: body.messages as any[], options: { num_predict: 4096 } });
+      payload.stream = false; delete payload.usage;
+      body = payload;
+      if (tools.length) body.tool_choice = 'auto';
+    }
     if (provider === 'ollama') body.options = { num_predict: 4096 };
     else body.max_tokens = 4096;
     if (tools.length) body.tools = tools.map(t => ({ type: 'function', function: t }));
