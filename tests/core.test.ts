@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULTS, loadSettings } from '../src/config';
-import { endpoint, makeRequest, parseResponse, send } from '../src/providers';
+import { endpoint, makeRequest, parseResponse, safeErrorData, send } from '../src/providers';
 import { VaultTools, safePath, type VaultAccess } from '../src/vault-tools';
 import { runAgent } from '../src/agent';
 
@@ -145,6 +145,21 @@ test('disabled tools cannot be invoked even if a provider returns an unsolicited
       return { status: 200, json: { message: { role: 'assistant', content: 'Hello.' } } };
     } });
   assert.equal(f.files.has('Projects/Unexpected.md'), false);
+});
+
+test('billing failures are classified without exposing provider response text', async () => {
+  const data = safeErrorData(JSON.stringify({error: {message: 'Your credit balance is too low. sensitive-response-body'}}));
+  assert.deepEqual(data, {billing: true});
+  assert.deepEqual(safeErrorData('<html>secret</html>'), {billing: false});
+  assert.deepEqual(safeErrorData('null'), {billing: false});
+  for (const status of [400, 402]) {
+    await assert.rejects(send(async () => ({status, json: status === 400 ? data : {}}),
+      {url: 'https://example.org', method: 'GET', headers: {}}, new AbortController().signal), error => {
+        assert.match((error as Error).message, /Insufficient API credits/);
+        assert.doesNotMatch((error as Error).message, /sensitive-response-body/);
+        return true;
+      });
+  }
 });
 
 test('missing cloud credentials fail before any network request can be built', () => {

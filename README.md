@@ -58,7 +58,7 @@ For Ollama, start Ollama and install a model that supports tools. For an OpenAI-
 
 For cloud APIs, model access and billing are handled by the provider. A consumer chat subscription may not include API credit. The plugin itself has no subscription, paywall, telemetry, or account service.
 
-**Testing status:** Ollama and an OpenAI-compatible endpoint have passed live local tests. OpenRouter and Anthropic have protocol tests but have not yet been tested with live credentials. See [TESTING.md](TESTING.md) for exact coverage and platform limitations.
+**Testing status:** Ollama, an OpenAI-compatible endpoint, and OpenRouter have passed live note-tool tests. Anthropic authenticated model discovery succeeds, but chat testing is blocked by insufficient API credits on the test account; its tool protocol remains fixture-tested. See [TESTING.md](TESTING.md) for exact coverage and platform limitations.
 
 If a model does not support tool calling, disable **Enable note tools**. You can still chat and attach a note. API replies currently appear as complete messages rather than token-by-token streaming.
 
@@ -86,7 +86,7 @@ Excluded folders default to `Templates,Private` and apply to model-driven listin
 - **Stop** cancels further processing and tool actions. Obsidian's `requestUrl` does not abort the underlying HTTP request; the provider may finish and charge for a request already sent. Requests time out in the UI after 120 seconds.
 - Model output is rendered without image embeds or raw HTML so replies do not automatically load external images.
 
-## Limits in 0.1.0
+## Limits in 0.1.1
 
 Search is literal text search, not embeddings. Each search scans up to 300 notes and returns up to 20 results with pagination. Listing returns up to 100 paths per page. Reading/writing a note is limited to 60,000 characters. Conversations have a bounded payload and a maximum of 12 tool rounds per turn. These limits keep a small sidebar assistant predictable; very large projects may need narrower folders or requests. Applied changes remain saved if a later request fails or is stopped; the next message then starts with fresh context.
 

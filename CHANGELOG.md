@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1
+
+- Explain insufficient API credits for known provider billing errors without exposing response bodies.
+- Add a regression test for billing failures and a manual authenticated cloud test using synthetic in-memory notes.
+- Verify OpenRouter model discovery and live note read/create/update flows. Anthropic model discovery succeeds; chat testing is blocked by insufficient account credits.
+
 ## 0.1.0
 
 Initial development release of the MechApe vault companion.

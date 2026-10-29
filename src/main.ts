@@ -1,6 +1,6 @@
 import { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, Modal, Notice, TFile, TFolder, MarkdownRenderer, requestUrl, type App } from 'obsidian';
 import { loadSettings, PROVIDERS, type Settings, type Provider, type Skill } from './config';
-import { listModels, type Message, type Transport } from './providers';
+import { listModels, safeErrorData, type Message, type Transport } from './providers';
 import { VaultTools, safePath, type Change, type VaultAccess } from './vault-tools';
 import { runAgent } from './agent';
 
@@ -8,7 +8,7 @@ const VIEW = 'mechape-chat';
 const transport: Transport = async request => {
   const result = await requestUrl({ ...request, throw: false });
   // Do not parse HTML error pages or expose response bodies that may contain credentials.
-  return { status: result.status, json: result.status >= 400 ? {} : result.json };
+  return { status: result.status, json: result.status >= 400 ? safeErrorData(result.text) : result.json };
 };
 
 class ReviewModal extends Modal {

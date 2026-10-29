@@ -7,6 +7,14 @@ export interface Message {
 }
 export interface HttpRequest { url: string; method: string; headers: Record<string, string>; body?: string }
 export type Transport = (request: HttpRequest) => Promise<{ status: number; json: any }>;
+// Classify known billing failures without ever displaying arbitrary provider text.
+export function safeErrorData(text: string): { billing: boolean } {
+  try {
+    const data = JSON.parse(text);
+    const message = typeof data.error?.message === 'string' ? data.error.message : '';
+    return { billing: /credit balance is too low|insufficient credits|insufficient_quota/i.test(message) };
+  } catch { return { billing: false }; }
+}
 export function endpoint(base: string, path: string): string {
   const url = new URL(base);
   if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error('Use an HTTP(S) API base URL without credentials, query, or fragment.');
@@ -83,6 +91,7 @@ export async function send(transport: Transport, request: HttpRequest, signal: A
   try {
     const response = await Promise.race([transport(request), guard]);
     signal.throwIfAborted();
+    if (response.status >= 400 && (response.status === 402 || response.json?.billing === true)) throw new Error(`Provider HTTP ${response.status}. Insufficient API credits. Check billing in your provider account, then try again.`);
     if (response.status >= 400) throw new Error(`Provider HTTP ${response.status}. ${response.status === 401 || response.status === 403 ? 'Check your API key and access.' : response.status === 429 ? 'Rate limit or credit limit reached; retry later.' : 'Check your model, API base URL, and tool support.'}`);
     return response.json;
   } finally { clearTimeout(timer!); signal.removeEventListener('abort', abort); }

@@ -5,7 +5,7 @@ Test date: October 28, 2026 (America/Denver).
 ## Automated checks
 
 - TypeScript strict type checking and esbuild production bundling pass.
-- All 17 tests in `tests/core.test.ts` pass.
+- All 18 tests in `tests/core.test.ts` pass.
 - Release verification passes: metadata/version consistency, required documentation, runtime dependencies, matching packaged files, and SHA256 generation.
 - The runtime bundle imports only Obsidian. No runtime Node.js/Electron dependency is bundled.
 
@@ -30,9 +30,18 @@ Environment: Windows, Obsidian 1.14.5, Ollama with existing `llama3.2:latest` an
 - Saved a successful chat through the Save button and verified the Markdown export in the test project.
 - The small local model emitted literal newline escapes in its initial proposed Markdown and stopped after a read when first asked for a combined read/update. These are model-output limitations visible during review, not a reason to bypass review. Do not promise perfect tool use for every model.
 
+## Authenticated cloud checks for 0.1.1
+
+- OpenRouter, `anthropic/claude-haiku-4.5`: authenticated model catalog, read/create/update tool calls, review callbacks, tool-result round trips, and final answer passed using a synthetic in-memory fixture.
+- Obsidian 1.14.5 on Windows: OpenRouter model refresh succeeded. The sidebar read `MechApe Test/Connection check.md`, proposed creation of `OpenRouter check.md`, then read and proposed updating that note. Both review dialogs displayed the expected content and were explicitly applied.
+- Rejected a separate OpenRouter creation proposal. The model acknowledged rejection without retrying; the target file does not exist. Verified the approved note's exact final text on disk.
+- Anthropic, `claude-sonnet-5-5`: authenticated model catalog succeeded. Chat requests returned HTTP 400 with insufficient account credits. This is a billing block, not a passed chat/tool test.
+- Fixed the generic HTTP 400 message for recognized billing failures. Only a boolean classification crosses the error parser; arbitrary provider response text is never displayed. Verified against the live billing response and an automated regression test.
+- Reproduce the manual test with `MECHAPE_SETTINGS` pointing to local plugin settings and `node --import tsx scripts/smoke-cloud.ts`. Optional `MECHAPE_PROVIDER` selects one cloud provider; `MECHAPE_OPENROUTER_MODEL` overrides the OpenRouter model for this run. The script does not modify settings or vault files, prints no credentials, and sends only synthetic notes. It incurs normal API charges.
+
 ## Disclosed coverage limitations
 
-- OpenRouter and Anthropic: protocol/error handling is fixture-tested; live authenticated calls were not tested because no provider keys were configured. No cloud compatibility certification is claimed.
+- Anthropic chat and note tools remain blocked by insufficient API credits. OpenRouter coverage applies to the tested model, not every model on its catalog.
 - The live compatible-server test used Ollama's OpenAI-compatible endpoint, not every compatible server implementation.
 - macOS/Linux Obsidian application smoke tests are not available on this Windows host. Cross-platform CI passes are not a substitute. Mobile is deliberately disabled and needs separate device testing before being enabled.
 - Community directory automated scanner results, which become available after submission.
