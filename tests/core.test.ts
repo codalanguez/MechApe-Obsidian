@@ -105,3 +105,50 @@ test('agent executes a read tool and supplies its result on the next model reque
   } });
   assert.equal(count, 2); assert.equal(result.at(-1)?.content, 'Here is Alpha.');
 });
+
+test('Anthropic batches multiple tool results into one user turn without changing history', () => {
+  const assistant = parseResponse('anthropic', { content: [
+    { type: 'text', text: 'Reading two notes.' },
+    { type: 'tool_use', id: 'a', name: 'read_note', input: { path: 'A.md' } },
+    { type: 'tool_use', id: 'b', name: 'read_note', input: { path: 'B.md' } }
+  ] });
+  const before = JSON.stringify(assistant);
+  const request = makeRequest('anthropic', { ...DEFAULTS.connections.anthropic, model: 'fixture', apiKey: 'fixture-key' }, 'system', [
+    { role: 'user', content: 'Read both notes.' }, assistant,
+    { role: 'tool', callId: 'a', content: 'A' }, { role: 'tool', callId: 'b', content: 'B' }
+  ], []);
+  const messages = JSON.parse(request.body!).messages;
+  assert.equal(messages.length, 3);
+  assert.deepEqual(messages[2].content.map((block: any) => block.tool_use_id), ['a', 'b']);
+  assert.equal(JSON.stringify(assistant), before);
+});
+
+test('HTTP failures expose actionable status without echoing response secrets', async () => {
+  for (const status of [401, 403, 429, 500]) {
+    await assert.rejects(send(async () => ({ status, json: { error: 'sensitive-response-body' } }),
+      { url: 'https://example.org', method: 'GET', headers: {} }, new AbortController().signal), error => {
+        assert.match((error as Error).message, new RegExp(String(status)));
+        assert.doesNotMatch((error as Error).message, /sensitive-response-body/);
+        return true;
+      });
+  }
+});
+
+test('disabled tools cannot be invoked even if a provider returns an unsolicited write', async () => {
+  const settings = loadSettings(null); settings.toolsEnabled = false; settings.connections.ollama.model = 'fixture';
+  const f = fixture(); let count = 0;
+  await runAgent({ settings, skill: settings.skills[0], tools: f.tools, signal: new AbortController().signal,
+    messages: [{ role: 'user', content: 'Hello' }], onText: async () => {}, onActivity: () => {}, transport: async request => {
+      const body = JSON.parse(request.body!); assert.equal(body.tools, undefined);
+      if (++count === 1) return { status: 200, json: { message: { role: 'assistant', content: '', tool_calls: [{ function: { name: 'create_note', arguments: { path: 'Projects/Unexpected.md', content: 'bad' } } }] } } };
+      assert.match(body.messages.at(-1).content, /disabled or unavailable/);
+      return { status: 200, json: { message: { role: 'assistant', content: 'Hello.' } } };
+    } });
+  assert.equal(f.files.has('Projects/Unexpected.md'), false);
+});
+
+test('missing cloud credentials fail before any network request can be built', () => {
+  for (const provider of ['openrouter', 'anthropic'] as const) {
+    assert.throws(() => makeRequest(provider, { ...DEFAULTS.connections[provider], model: 'fixture' }, 'system', [{ role: 'user', content: 'hello' }], []), /API key/);
+  }
+});
