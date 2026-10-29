@@ -37,6 +37,7 @@ Environment: Windows, Obsidian 1.14.5, Ollama with existing `llama3.2:latest` an
 - Rejected a separate OpenRouter creation proposal. The model acknowledged rejection without retrying; the target file does not exist. Verified the approved note's exact final text on disk.
 - Anthropic, `claude-sonnet-5-5`: authenticated model catalog succeeded. Chat requests returned HTTP 400 with insufficient account credits. This is a billing block, not a passed chat/tool test.
 - Fixed the generic HTTP 400 message for recognized billing failures. Only a boolean classification crosses the error parser; arbitrary provider response text is never displayed. Verified against the live billing response and an automated regression test.
+- Installed and reloaded 0.1.1 in Obsidian, preserving keys/settings. A live Anthropic sidebar request displayed the new insufficient-credit guidance and restored the composer. The installed bundle and draft release have matching SHA256 hashes. All 18 tests and packaging pass on Windows, macOS, and Ubuntu CI.
 - Reproduce the manual test with `MECHAPE_SETTINGS` pointing to local plugin settings and `node --import tsx scripts/smoke-cloud.ts`. Optional `MECHAPE_PROVIDER` selects one cloud provider; `MECHAPE_OPENROUTER_MODEL` overrides the OpenRouter model for this run. The script does not modify settings or vault files, prints no credentials, and sends only synthetic notes. It incurs normal API charges.
 
 ## Disclosed coverage limitations
