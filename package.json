@@ -1,0 +1,20 @@
+{
+  "name": "mechape-obsidian",
+  "version": "0.1.0",
+  "description": "MechApe's vault companion: local-first chat, project tools, and skill profiles for Obsidian",
+  "private": true,
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --noEmit && node esbuild.config.mjs",
+    "dev": "node esbuild.config.mjs --watch",
+    "test": "tsx --test tests/*.test.ts",
+    "package": "npm run build && node scripts/package.mjs && node scripts/verify-release.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "esbuild": "^0.25.0",
+    "obsidian": "latest",
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0"
+  }
+}
