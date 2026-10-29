@@ -26,4 +26,6 @@ Upload individual `main.js`, `manifest.json`, and `styles.css` files from the ve
 
 ## Publishing boundary
 
-Use the public repository and matching `0.1.1` GitHub release for submission once the draft is published. Version 0.1.0 is already public; 0.1.1 is the prepared billing-error patch. Anthropic chat testing is currently blocked by insufficient credits on the test account. Directory account linking and the actual community submission are separate steps; no community submission has occurred. Include the live-testing limitations from TESTING.md when reviewing the release.
+The public repository and matching [0.1.1 GitHub release](https://github.com/codalanguez/MechApe-Obsidian/releases/tag/0.1.1) are ready for submission. The release includes the required individual assets and is published with the Anthropic billing limitation documented. Anthropic model discovery succeeded; successful chat and note-tool testing remains blocked by insufficient credits on the test account. Directory account linking and the actual community submission are separate steps; no community submission has occurred. Include the live-testing limitations from TESTING.md when reviewing the release.
+
+Sign in at https://community.obsidian.md, link the GitHub account that owns the repository, and add `codalanguez/MechApe-Obsidian`. Confirm plugin ID availability and address any automated review findings before directory publication.
