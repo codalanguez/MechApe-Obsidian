@@ -1,11 +1,16 @@
 import fs from 'node:fs';
-import crypto from 'node:crypto';
-const root = new URL('../src/core/', import.meta.url);
-const manifest = JSON.parse(fs.readFileSync(new URL('manifest.json', root), 'utf8'));
-const expected = ['LICENSE', 'openrouter.d.ts', 'openrouter.js', 'prompt.d.ts', 'prompt.js', 'skills.d.ts', 'skills.js'];
-if (JSON.stringify(Object.keys(manifest.files).sort()) !== JSON.stringify(expected)) throw new Error('Unexpected shared-core manifest');
-for (const [file, hash] of Object.entries(manifest.files)) {
-  const source = fs.readFileSync(new URL(file, root), 'utf8').replace(/\r\n/g, '\n');
-  if (crypto.createHash('sha256').update(source).digest('hex') !== hash) throw new Error(`Shared core drift: ${file}. Sync from the desktop core.`);
-}
-console.log('MechApe shared-core checksums verified.');
+import assert from 'node:assert/strict';
+import { createRequire } from 'node:module';
+const require = createRequire(import.meta.url);
+const pkg = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const lock = JSON.parse(fs.readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'));
+const installed = require('@mechape/core/package.json');
+const expected = 'https://github.com/codalanguez/mechape-core/releases/download/v0.1.0/mechape-core-0.1.0.tgz';
+assert.equal(pkg.dependencies['@mechape/core'], expected);
+const entry = lock.packages['node_modules/@mechape/core'];
+assert.equal(entry.resolved, expected);
+assert.equal(entry.version, installed.version);
+assert.equal(installed.version, '0.1.0');
+assert.match(entry.integrity, /^sha512-/);
+for (const module of ['openrouter', 'prompt', 'skills']) assert.ok(Object.keys(require('@mechape/core/' + module)).length);
+console.log('Versioned MechApe core dependency and lockfile verified.');

@@ -1,5 +1,5 @@
-import { composeSystem } from './core/prompt';
-import { parseFrontmatter } from './core/skills';
+import { composeSystem } from '@mechape/core/prompt';
+import { parseFrontmatter } from '@mechape/core/skills';
 import { makeRequest, parseResponse, send, type Message, type Transport } from './providers';
 import { PROVIDERS, type Settings, type Skill } from './config';
 import type { VaultTools } from './vault-tools';

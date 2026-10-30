@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.3
+
+- Replace copied shared modules with the versioned public @mechape/core 0.1.0 package.
+- Pin the public release artifact and lockfile integrity; builds require no private repository access.
+- Bundle the package and MIT attribution into main.js; vault permissions and write-review behavior are unchanged.
+
 ## 0.1.2
 
 - Share the desktop OpenRouter privacy/caching policy, prompt composition, and skill parser with exact source checksums and MIT attribution.

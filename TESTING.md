@@ -11,6 +11,14 @@ Automated release verification: October 29, 2026 (America/Denver). Live applicat
 
 The tests exercise path traversal/hidden-file rejection, project boundaries, read-before-update, approval/rejection, concurrent edits, read-only skills, cancellation, provider-specific tool protocols, multiple Anthropic tool results, malformed responses, safe HTTP errors, missing credentials, disabled-tool enforcement, endpoint validation, settings migration, and the agent loop.
 
+## Release 0.1.3 package integration
+
+- Clean npm ci from the public core release succeeds without access to the private desktop repository.
+- All 21 tests and TypeScript checks pass against @mechape/core 0.1.0.
+- Production packaging passes; the bundle requires only Obsidian at runtime and contains the core MIT notice.
+- The dependency uses the same exact release URL and SHA512 lockfile integrity as desktop. Core package CI passes on Windows, macOS, and Linux.
+- Live provider results below belong to 0.1.2; this extraction changes dependency packaging, not provider behavior.
+
 ## Release 0.1.2 checks (October 29)
 
 - Fresh OpenRouter integration passed using the configured account and `anthropic/claude-haiku-4.5`: model discovery, synthetic note read/create/update, two review callbacks, tool results, and final answer. No vault note contents were sent.

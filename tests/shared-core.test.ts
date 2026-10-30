@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { makeRequest } from '../src/providers';
 import { systemPrompt } from '../src/agent';
-import { composeSystem } from '../src/core/prompt';
+import { composeSystem } from '@mechape/core/prompt';
 
 test('OpenRouter uses desktop privacy and caching policy while preserving tool history', () => {
   const raw = { role: 'assistant', content: '', reasoning_details: [{ text: 'opaque' }], tool_calls: [{ id: 'a', type: 'function', function: { name: 'read_note', arguments: '{}' } }] };

@@ -1,4 +1,4 @@
-import { buildChatPayload, headers as openRouterHeaders } from './core/openrouter';
+import { buildChatPayload, headers as openRouterHeaders } from '@mechape/core/openrouter';
 import type { Connection, Provider } from './config';
 export interface ToolDefinition { name: string; description: string; parameters: Record<string, unknown> }
 export interface ToolCall { id: string; name: string; arguments: Record<string, unknown> }
