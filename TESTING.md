@@ -16,6 +16,7 @@ The tests exercise path traversal/hidden-file rejection, project boundaries, rea
 - Clean npm ci from the public core release succeeds without access to the private desktop repository.
 - All 21 tests and TypeScript checks pass against @mechape/core 0.1.0.
 - Production packaging passes; the bundle requires only Obsidian at runtime and contains the core MIT notice.
+- Plugin 0.1.3 CI passes on Windows, macOS, and Linux; the published release assets match the local build byte for byte.
 - The dependency uses the same exact release URL and SHA512 lockfile integrity as desktop. Core package CI passes on Windows, macOS, and Linux.
 - Live provider results below belong to 0.1.2; this extraction changes dependency packaging, not provider behavior.
 
