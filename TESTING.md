@@ -14,6 +14,8 @@ The tests exercise path traversal/hidden-file rejection, project boundaries, rea
 ## Release 0.1.2 checks (October 29)
 
 - Fresh OpenRouter integration passed using the configured account and `anthropic/claude-haiku-4.5`: model discovery, synthetic note read/create/update, two review callbacks, tool results, and final answer. No vault note contents were sent.
+- Local Ollama OpenAI-compatible model discovery, a real read-note tool call, tool-result round trip, and final answer passed with `qwen2.5:7b` after a retry. The first cold-start attempt failed; the warmed model completed successfully.
+- Windows, macOS, and Linux CI passed for commit `ff81dd5`. All three CI release assets matched the local SHA256 checksums.
 - Direct Anthropic chat remains limited by the previously documented account billing condition; no successful direct Anthropic chat is claimed.
 
 ## Live desktop checks
