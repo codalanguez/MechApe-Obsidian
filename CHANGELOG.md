@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+- Share the desktop OpenRouter privacy/caching policy, prompt composition, and skill parser with exact source checksums and MIT attribution.
+- Keep vault permissions, write review, and concurrent-edit protection enforced around shared skill instructions.
+- Link the larger desktop experience through its public website; keep the plugin free and independent.
+- Prepare the current source and release assets for community review.
+
 ## 0.1.1
 
 - Explain insufficient API credits for known provider billing errors without exposing response bodies.

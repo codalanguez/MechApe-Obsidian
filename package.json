@@ -1,6 +1,6 @@
 {
   "name": "mechape-obsidian",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MechApe's vault companion: local-first chat, project tools, and skill profiles for Obsidian",
   "private": true,
   "license": "MIT",

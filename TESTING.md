@@ -1,15 +1,20 @@
 # Verification record
 
-Test date: October 28, 2026 (America/Denver).
+Automated release verification: October 29, 2026 (America/Denver). Live application checks below were recorded on October 28 unless stated otherwise.
 
 ## Automated checks
 
 - TypeScript strict type checking and esbuild production bundling pass.
-- All 18 tests in `tests/core.test.ts` pass.
+- All 21 tests in `tests/*.test.ts` pass, including shared-core privacy, tool-history, permission, and prompt-composition coverage.
 - Release verification passes: metadata/version consistency, required documentation, runtime dependencies, matching packaged files, and SHA256 generation.
 - The runtime bundle imports only Obsidian. No runtime Node.js/Electron dependency is bundled.
 
 The tests exercise path traversal/hidden-file rejection, project boundaries, read-before-update, approval/rejection, concurrent edits, read-only skills, cancellation, provider-specific tool protocols, multiple Anthropic tool results, malformed responses, safe HTTP errors, missing credentials, disabled-tool enforcement, endpoint validation, settings migration, and the agent loop.
+
+## Release 0.1.2 checks (October 29)
+
+- Fresh OpenRouter integration passed using the configured account and `anthropic/claude-haiku-4.5`: model discovery, synthetic note read/create/update, two review callbacks, tool results, and final answer. No vault note contents were sent.
+- Direct Anthropic chat remains limited by the previously documented account billing condition; no successful direct Anthropic chat is claimed.
 
 ## Live desktop checks
 
