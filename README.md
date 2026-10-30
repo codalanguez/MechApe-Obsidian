@@ -110,3 +110,7 @@ See [RELEASING.md](RELEASING.md) for public-release preparation, [TESTING.md](TE
 ## License
 
 MIT. Copyright (c) 2026 Coda Languez. This is a companion project to [MechApe](https://codalanguez.com/mechape/), not an official Obsidian product.
+
+## Support development
+
+MechApe for Obsidian is free. [Leave an optional tip on PayPal](https://www.paypal.com/ncp/payment/GBFACZQK4TXBL) to support development. Tips do not unlock features or purchase the desktop edition.
