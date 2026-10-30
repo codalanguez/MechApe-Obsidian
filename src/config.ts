@@ -1,5 +1,5 @@
-export type Provider = 'ollama' | 'openrouter' | 'anthropic' | 'compatible';
-export interface Connection { baseUrl: string; model: string; apiKey: string }
+import type { Provider, Connection } from '@mechape/core/providers';
+export type { Provider, Connection } from '@mechape/core/providers';
 export interface Skill { id: string; name: string; instructions: string; canWrite: boolean }
 export interface Settings {
   provider: Provider;

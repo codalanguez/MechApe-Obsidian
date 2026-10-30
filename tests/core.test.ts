@@ -167,3 +167,52 @@ test('missing cloud credentials fail before any network request can be built', (
     assert.throws(() => makeRequest(provider, { ...DEFAULTS.connections[provider], model: 'fixture' }, 'system', [{ role: 'user', content: 'hello' }], []), /API key/);
   }
 });
+
+for (const outcome of ['approve', 'reject', 'concurrent-edit', 'cancel'] as const) {
+  test(`shared agent preserves vault review: ${outcome}`, async () => {
+    const controller = new AbortController();
+    let reviews = 0;
+    const f = fixture(true, async () => {
+      reviews++;
+      assert.equal(f.files.get('Projects/Alpha.md'), '# Alpha\nOriginal', 'proposal has not written yet');
+      if (outcome === 'concurrent-edit') f.files.set('Projects/Alpha.md', 'user edit');
+      if (outcome === 'cancel') controller.abort();
+      return outcome !== 'reject';
+    });
+    const settings = loadSettings(null); settings.project = 'Projects'; settings.connections.ollama.model = 'fixture';
+    let requests = 0;
+    const promise = runAgent({ settings, skill: settings.skills[0], tools: f.tools, signal: controller.signal,
+      messages: [{ role: 'user', content: 'Edit Alpha' }], onText: async () => {}, onActivity: () => {}, transport: async request => {
+        requests++;
+        if (requests <= 2) return { status: 200, json: { message: { role: 'assistant', content: '', tool_calls: [{ function: {
+          name: requests === 1 ? 'read_note' : 'update_note', arguments: { path: 'Projects/Alpha.md', content: 'AI edit' }
+        } }] } } };
+        const history = JSON.parse(request.body!).messages;
+        const expected = outcome === 'approve' ? 'applied' : outcome === 'reject' ? 'rejected' : 'error';
+        assert.equal(JSON.parse(history.at(-1).content).status, expected);
+        return { status: 200, json: { message: { role: 'assistant', content: 'Finished.' } } };
+      } });
+    if (outcome === 'cancel') await assert.rejects(promise); else await promise;
+    assert.equal(reviews, 1);
+    assert.equal(f.files.get('Projects/Alpha.md'), outcome === 'approve' ? 'AI edit' : outcome === 'concurrent-edit' ? 'user edit' : '# Alpha\nOriginal');
+    if (outcome === 'cancel') assert.equal(requests, 2);
+  });
+}
+
+test('shared agent cannot bypass read-only permissions or project boundaries', async () => {
+  const f = fixture(false); const settings = loadSettings(null); settings.connections.ollama.model = 'fixture';
+  let requests = 0;
+  await runAgent({ settings, skill: settings.skills[2], tools: f.tools, signal: new AbortController().signal,
+    messages: [{ role: 'user', content: 'Read outside and write' }], onText: async () => {}, onActivity: () => {}, transport: async request => {
+      const body = JSON.parse(request.body!);
+      assert.ok(!body.tools.some((tool: any) => tool.function.name === 'create_note'));
+      if (++requests === 1) return { status: 200, json: { message: { role: 'assistant', content: '', tool_calls: [
+        { function: { name: 'read_note', arguments: { path: 'Elsewhere.md' } } },
+        { function: { name: 'create_note', arguments: { path: 'Projects/Blocked.md', content: 'bad' } } }
+      ] } } };
+      assert.match(body.messages.at(-2).content, /outside the selected project/);
+      assert.match(body.messages.at(-1).content, /disabled or unavailable/);
+      return { status: 200, json: { message: { role: 'assistant', content: 'Unavailable.' } } };
+    } });
+  assert.equal(f.files.has('Projects/Blocked.md'), false);
+});

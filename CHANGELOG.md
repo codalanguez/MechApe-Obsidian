@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.4
+
+- Use @mechape/core 0.2.0 for all provider adapters and the shared bounded agent loop.
+- Retain host-enforced vault boundaries, write approval, read-only skills, stale-edit checks, and cancellation.
+- Add end-to-end loop tests for approved/rejected/stale/cancelled edits and unsolicited tool calls.
+- Preserve provider tool metadata and use shared safe HTTP errors, timeouts and explicit unsupported-tool fallback.
+
 ## 0.1.3
 
 - Replace copied shared modules with the versioned public @mechape/core 0.1.0 package.

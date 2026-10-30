@@ -5,11 +5,20 @@ Automated release verification: October 29, 2026 (America/Denver). Live applicat
 ## Automated checks
 
 - TypeScript strict type checking and esbuild production bundling pass.
-- All 21 tests in `tests/*.test.ts` pass, including shared-core privacy, tool-history, permission, and prompt-composition coverage.
+- All 26 tests in `tests/*.test.ts` pass, including shared-core privacy, tool-history, permission, and prompt-composition coverage.
 - Release verification passes: metadata/version consistency, required documentation, runtime dependencies, matching packaged files, and SHA256 generation.
 - The runtime bundle imports only Obsidian. No runtime Node.js/Electron dependency is bundled.
 
 The tests exercise path traversal/hidden-file rejection, project boundaries, read-before-update, approval/rejection, concurrent edits, read-only skills, cancellation, provider-specific tool protocols, multiple Anthropic tool results, malformed responses, safe HTTP errors, missing credentials, disabled-tool enforcement, endpoint validation, settings migration, and the agent loop.
+
+## Release 0.1.4 shared provider and loop integration
+
+- All 26 host tests pass against @mechape/core 0.2.0. New integration cases drive the actual shared loop through approval, rejection, concurrent edits, cancellation during review, read-only permissions and project boundaries.
+- VaultTools and its write-review implementation remain unchanged.
+- Production TypeScript, bundle and release-package checks pass; only Obsidian remains a runtime import.
+- Fresh OpenRouter model discovery and synthetic note read/create/update passed with two review callbacks through the shared provider and loop.
+- Fresh local Ollama OpenAI-compatible model discovery, read-note tool call, tool-result round trip, and final answer passed with the existing Qwen model.
+- Core package tests pass on Windows, macOS and Linux. Direct Anthropic protocol/tool handling has automated coverage; live chat still has the documented billing limitation.
 
 ## Release 0.1.3 package integration
 

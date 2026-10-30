@@ -7,7 +7,7 @@
 - **Author:** Coda Languez
 - **Author website:** https://codalanguez.com
 - **Description:** A sidebar AI companion with Ollama, OpenRouter, Anthropic, skill profiles, and project-aware note tools.
-- **Version/tag:** `0.1.3`
+- **Version/tag:** `0.1.4`
 - **Minimum Obsidian:** `1.14.5`
 - **Repository:** https://github.com/codalanguez/MechApe-Obsidian
 - **License:** MIT
@@ -28,6 +28,6 @@ Upload individual `main.js`, `manifest.json`, and `styles.css` files from the ve
 
 **Prepared for community submission independently of the desktop beta.** The free plugin remains independent of any future paid desktop edition. Its README discloses the promotional larger-experience link and separate pricing. Payment enforcement in the desktop app is not a prerequisite for this plugin's existing features.
 
-The public repository and [0.1.3 GitHub release](https://github.com/codalanguez/MechApe-Obsidian/releases/tag/0.1.3) are ready for submission. The published release includes the required individual assets, verified SHA256 checksums, and a supplementary installation ZIP. Anthropic model discovery succeeded; successful chat and note-tool testing remains blocked by insufficient credits on the test account. Directory account linking and the actual community submission are separate steps; no community submission has occurred. Include the live-testing limitations from TESTING.md when reviewing the release.
+The public repository and [0.1.4 GitHub release](https://github.com/codalanguez/MechApe-Obsidian/releases/tag/0.1.4) are ready for submission. The published release includes the required individual assets, verified SHA256 checksums, and a supplementary installation ZIP. Anthropic model discovery succeeded; successful chat and note-tool testing remains blocked by insufficient credits on the test account. Directory account linking and the actual community submission are separate steps; no community submission has occurred. Include the live-testing limitations from TESTING.md when reviewing the release.
 
 Sign in at https://community.obsidian.md, link the GitHub account that owns the repository, and add `codalanguez/MechApe-Obsidian`. Confirm plugin ID availability and address any automated review findings before directory publication.
