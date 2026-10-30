@@ -16,6 +16,7 @@ The tests exercise path traversal/hidden-file rejection, project boundaries, rea
 - All 26 host tests pass against @mechape/core 0.2.0. New integration cases drive the actual shared loop through approval, rejection, concurrent edits, cancellation during review, read-only permissions and project boundaries.
 - VaultTools and its write-review implementation remain unchanged.
 - Production TypeScript, bundle and release-package checks pass; only Obsidian remains a runtime import.
+- Windows, macOS and Linux CI passed for 0.1.4. Published release assets match the tested local build byte for byte.
 - Fresh OpenRouter model discovery and synthetic note read/create/update passed with two review callbacks through the shared provider and loop.
 - Fresh local Ollama OpenAI-compatible model discovery, read-note tool call, tool-result round trip, and final answer passed with the existing Qwen model.
 - Core package tests pass on Windows, macOS and Linux. Direct Anthropic protocol/tool handling has automated coverage; live chat still has the documented billing limitation.
