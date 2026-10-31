@@ -74,3 +74,13 @@ Environment: Windows, Obsidian 1.14.5, Ollama with existing `llama3.2:latest` an
 - Community directory automated scanner results, which become available after submission.
 
 Provider fixture tests are not equivalent to live service certification. Release notes preserve this distinction.
+
+## Release 0.1.6 acceptance (October 30)
+
+- Isolated release checkout excludes unfinished Image Studio code and in-plugin donation links. Financial support remains in manifest fundingUrl only.
+- Locked dependency installation, all 45 automated tests, TypeScript, bundle, metadata/runtime-import checks, package equality and SHA256 generation passed on Windows. Tests include streaming assembly for all provider formats, live localhost socket cancellation, cancelled tool actions, reviewed writes, project boundaries, history serialization and API-key storage migration/opt-out.
+- Installed the exact packaged assets in a disposable vault with no credentials and only MechApe enabled, on Windows Obsidian 1.14.5. Disabled/re-enabled the plugin and opened the sidebar successfully.
+- Verified keyboard project substring search, creation of Projects/Release check, Use current project resolving Projects/Sample from an open synthetic note, slash filtering and Enter selection of Research librarian, project lock, New/History draft restoration, and restoration after vault reload. Controls wrapped at approximately 280 pixels; collapsing options restored visible composer space.
+- Default local Ollama model refresh returned the recoverable connection error during this clean-vault run. No successful new live Ollama conversation is claimed for this candidate. Previous live-provider records below remain historical evidence.
+- Before release isolation, the same chat implementation was exercised with live OpenRouter streaming on Windows. Text appeared incrementally and completion restored Send. Cancellation was verified by automated localhost transport/tool tests and a renderer harness; the attempted live cloud Stop check was interrupted by user activity and is not claimed as passed.
+- Direct Anthropic chat remains blocked by test-account billing. macOS/Linux native app checks and community scanner results remain outstanding.

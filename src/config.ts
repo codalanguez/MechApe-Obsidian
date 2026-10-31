@@ -2,6 +2,7 @@ import type { Provider, Connection } from '@mechape/core/providers';
 export type { Provider, Connection } from '@mechape/core/providers';
 export interface Skill { id: string; name: string; instructions: string; canWrite: boolean }
 export interface Settings {
+  rememberApiKeys: boolean;
   provider: Provider;
   connections: Record<Provider, Connection>;
   skills: Skill[];
@@ -12,6 +13,7 @@ export interface Settings {
 }
 export const PROVIDERS: Record<Provider, string> = { ollama: 'Ollama', openrouter: 'OpenRouter', anthropic: 'Anthropic', compatible: 'OpenAI-compatible' };
 export const DEFAULTS: Settings = {
+  rememberApiKeys: false,
   provider: 'ollama',
   connections: {
     ollama: { baseUrl: 'http://localhost:11434', model: '', apiKey: '' },
@@ -34,6 +36,18 @@ export function loadSettings(data: Partial<Settings> | null): Settings {
   for (const key of Object.keys(PROVIDERS) as Provider[]) connections[key] = { ...connections[key], ...data.connections?.[key] };
   const skills = Array.isArray(data.skills) && data.skills.length ? data.skills : defaults.skills;
   return { ...defaults, ...data, connections, skills,
+    rememberApiKeys: typeof data.rememberApiKeys==='boolean'?data.rememberApiKeys:Object.values(connections).some(c=>Boolean(c.apiKey)),
     provider: data.provider && data.provider in PROVIDERS ? data.provider : 'ollama',
     skillId: skills.some(s => s.id === data.skillId) ? data.skillId! : skills[0].id };
+}
+
+
+// Return a separate disk snapshot so session-only credentials remain usable
+// in memory, but cannot be persisted by unrelated settings changes.
+export function persistedSettings(settings: Settings): Settings {
+  const data = structuredClone(settings);
+  if (!data.rememberApiKeys) {
+    for (const connection of Object.values(data.connections)) connection.apiKey = '';
+  }
+  return data;
 }

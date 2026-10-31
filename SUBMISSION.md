@@ -1,33 +1,23 @@
-# Community submission worksheet
+# Community submission: MechApe 0.1.6
 
-## Listing fields
+- Repository: https://github.com/codalanguez/MechApe-Obsidian
+- Plugin ID: `mechape` (confirm availability during submission).
+- Name: MechApe. Author: Coda Languez. License: MIT.
+- Version/tag: `0.1.6` (no `v` prefix).
+- Minimum Obsidian: `1.14.5`; desktop-only.
+- Description: A sidebar AI companion with Ollama, OpenRouter, Anthropic, skill profiles, and project-aware note tools.
 
-- **Plugin ID:** `mechape` (confirm availability in the directory at submission time)
-- **Plugin name:** MechApe
-- **Author:** Coda Languez
-- **Author website:** https://codalanguez.com
-- **Description:** A sidebar AI companion with Ollama, OpenRouter, Anthropic, skill profiles, and project-aware note tools.
-- **Version/tag:** `0.1.5`
-- **Minimum Obsidian:** `1.14.5`
-- **Repository:** https://github.com/codalanguez/MechApe-Obsidian
-- **License:** MIT
+Free, independently useful vault assistant with streamed replies, local history, searchable models/projects, slash skills, a context chip and project locking. Note writes require explicit review. No desktop license or payment is required. A disclosed static link promotes the separate MechApe Desktop app. Financial support is offered only via `fundingUrl`; the plugin UI contains no donation links. Image Studio integration is not included.
 
-## Release description
+The README discloses remote-provider transmission, optional plain-text key storage, local plain-text transcript/draft storage, desktop streaming transport, and tested/untested providers and platforms. Direct Anthropic chat is not live-certified because the test account lacks credits.
 
-MechApe brings a compact AI companion to Obsidian's right sidebar. Use Ollama locally, bring your own OpenRouter or Anthropic key, or connect an OpenAI-compatible server. Choose a project folder and skill profile to search notes, develop drafts, and propose Markdown changes with review before writing.
+## Submission steps
 
-Includes Vault assistant, Writer & editor, Research librarian, and Project planner profiles. Create your own profiles in settings. Read-only tools and stale-edit checks keep note operations explicit. A link in the sidebar opens the full MechApe project for the larger studio experience.
+1. Confirm clean-checkout CI and the `0.1.6` GitHub release with matching individual `main.js`, `manifest.json`, `styles.css`, and supplemental `SHA256SUMS.txt`.
+2. Sign in to https://community.obsidian.md and connect the GitHub account owning the repository.
+3. Add the public repository. Confirm the plugin ID is available and review the directory’s developer-policy acknowledgement.
+4. Resolve scanner/reviewer findings; code corrections require a new version and release.
 
-Please read the README's provider, privacy, and API-key storage disclosures before using remote services. This first release returns complete responses rather than streaming tokens.
+Submission uses the Community directory, not a pull request to the legacy community-plugins JSON mirror. A GitHub release is not community approval. Directory submission has not yet been performed.
 
-## Assets
-
-Upload individual `main.js`, `manifest.json`, and `styles.css` files from the verified build. Add `dist/SHA256SUMS.txt` as a supplementary integrity file. The installation ZIP is useful for manual testing but does not replace the individual release assets.
-
-## Publishing boundary
-
-**Prepared for community submission independently of the desktop beta.** The free plugin remains independent of any future paid desktop edition. Its README discloses the promotional larger-experience link and separate pricing. Payment enforcement in the desktop app is not a prerequisite for this plugin's existing features.
-
-The public repository and [0.1.5 GitHub release](https://github.com/codalanguez/MechApe-Obsidian/releases/tag/0.1.5) are ready for submission. The published release includes the required individual assets, verified SHA256 checksums, and a supplementary installation ZIP. Anthropic model discovery succeeded; successful chat and note-tool testing remains blocked by insufficient credits on the test account. Directory account linking and the actual community submission are separate steps; no community submission has occurred. Include the live-testing limitations from TESTING.md when reviewing the release.
-
-Sign in at https://community.obsidian.md, link the GitHub account that owns the repository, and add `codalanguez/MechApe-Obsidian`. Confirm plugin ID availability and address any automated review findings before directory publication.
+References: [submission process](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin), [requirements](https://docs.obsidian.md/community-directory/submission-requirements-for-plugins), [developer policies](https://docs.obsidian.md/community-directory/developer-policies).

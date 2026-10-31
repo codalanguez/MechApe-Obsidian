@@ -1,116 +1,93 @@
 # MechApe for Obsidian
 
-A small AI companion in your vault's right sidebar. Chat with local models through Ollama, bring an OpenRouter or Anthropic API key, or connect an OpenAI-compatible endpoint. Find notes, develop drafts, and turn project conversations into reviewed note changes.
+A free AI companion in Obsidian’s right sidebar. Connect Ollama, OpenRouter, Anthropic, or an OpenAI-compatible endpoint to find notes, develop drafts, and propose reviewed Markdown changes.
 
-The free Obsidian edition of [MechApe](https://codalanguez.com/mechape/), by Coda Languez. **Want a larger experience?** The [full MechApe app](https://codalanguez.com/mechape/) offers a dedicated studio with projects and local model management. The sidebar includes a direct link. This plugin runs independently; the full app is not required.
+The free Obsidian edition of [MechApe](https://codalanguez.com/mechape/), by Coda Languez. The plugin works independently: no desktop purchase, subscription, activation, or MechApe account is required. Cloud-provider usage fees are separate. A static **Explore MechApe Desktop** link in the plugin promotes the author’s separate paid desktop product; it opens only when clicked.
 
-Both editions use the same portable MechApe core for prompt composition, skill parsing, and OpenRouter requests. Obsidian supplies the sidebar and vault; the standalone app supplies its own workspace and larger toolset. See [shared-core architecture](SHARED-CORE.md).
+**Version 0.1.6. Community-directory submission is pending.** Install manually from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases). This release is desktop-only, requires Obsidian 1.14.5 or later, and does not include the experimental Image Studio bridge.
 
 ## Features
 
-- Right-sidebar chat, ribbon button, and command palette commands.
-- Ollama, OpenRouter, Anthropic, and custom OpenAI-compatible connections; each remembers its own URL, model, and API key.
-- Refresh available models or enter a model ID directly.
-- Vault folders as projects: search, list, read, and propose edits within the selected folder.
-- Attach the active note explicitly to a message.
-- Create Markdown notes, including parent folders, and update existing notes with an Apply/Reject review dialog.
-- Concurrent-edit protection: a proposal cannot overwrite a note changed since the assistant read it.
-- Four editable skill profiles, plus custom profiles and duplication.
-- Read-only skills and an option to disable tools for plain chat.
-- Save a chat transcript as a Markdown note.
-- Native Obsidian theme colors and keyboard-friendly controls.
+- Collapsible Chat options with searchable model and project pickers.
+- Desktop streaming responses and a combined Send/Stop button; partial replies are kept after cancellation.
+- `/` skill menu in the composer, with built-in and custom instruction profiles.
+- Folder context from explorer selection or the **Use folder in MechApe** context-menu action.
+- A visible note/folder context chip and project lock to prevent accidental scope changes while browsing.
+- Local transcript and draft history, automatic restoration, and a searchable History dialog.
+- Markdown note creation and updates with Apply/Reject review and concurrent-edit protection.
+- Read-only skills, excluded folders, and an option to disable note tools.
+- Explicit note attachment and Markdown transcript export with **Save**.
 
-## Skill profiles
+## Install and connect
 
-Skills work as reusable system instructions. Select one from the sidebar; edit, duplicate, or create them under **Settings → MechApe → Skill profiles**.
-
-| Skill | Purpose | Note proposals |
-| --- | --- | --- |
-| Vault assistant | Find connections and organize notes | Enabled |
-| Writer & editor | Draft and revise while preserving voice and intent | Enabled |
-| Research librarian | Compare evidence and cite source notes | Disabled |
-| Project planner | Identify next actions, dependencies, and blockers | Enabled |
-
-Each profile has a name, instructions, and an enforced permission controlling write tools. These are prompt profiles, not executable scripts. Every write still requires review. Changing skill, provider, model, project, or access settings starts fresh model context so old project content does not silently carry across those boundaries.
-
-## Install the release
-
-This plugin has **not yet been published in the community directory**.
-
-Download the assets or installation ZIP from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases/latest). Community-directory installation will become available only after submission and review.
-
-1. Build with `npm ci` and `npm run package`, or obtain the three release assets.
-2. Copy the `dist/mechape` folder into `<your-vault>/.obsidian/plugins/` (or the equivalent plugins directory if you use a custom configuration folder).
-3. Reload Obsidian, then enable **MechApe** in **Settings → Community plugins**.
-4. Open **Settings → MechApe**, choose a provider, and enter its model ID. Refresh models to select an available model.
-5. Click the robot ribbon icon, or run **MechApe: Open chat**.
-
-Requires Obsidian 1.14.5 or later. The initial release is marked **desktop-only** because it has been exercised on Windows and has not been validated on mobile devices. The runtime uses no Node.js or Electron APIs, leaving room for mobile support after device testing.
-
-## Provider setup
+1. Download `main.js`, `manifest.json`, and `styles.css` from the same release.
+2. Copy them into `<vault>/.obsidian/plugins/mechape/` (use your configured vault configuration directory if different).
+3. Reload Obsidian and enable MechApe under **Settings → Community plugins**.
+4. In **Settings → MechApe**, configure your provider and API key if needed.
+5. Open **MechApe: Open chat** from the command palette or robot ribbon button.
+6. Expand **Chat options**, refresh models, and type to find your model. Choose a project folder to narrow access.
 
 | Provider | Default API base URL | Credentials |
 | --- | --- | --- |
 | Ollama | `http://localhost:11434` | Usually no key |
-| OpenRouter | `https://openrouter.ai/api/v1` | Your OpenRouter API key |
-| Anthropic | `https://api.anthropic.com/v1` | Your Anthropic API key |
-| OpenAI-compatible | `http://localhost:1234/v1` | Depends on your server |
+| OpenRouter | `https://openrouter.ai/api/v1` | OpenRouter API key |
+| Anthropic | `https://api.anthropic.com/v1` | Anthropic API key |
+| OpenAI-compatible | `http://localhost:1234/v1` | Depends on the server |
 
-For Ollama, start Ollama and install a model that supports tools. For an OpenAI-compatible server such as LM Studio or llama.cpp, enable its server and enter its actual base URL and loaded model ID. The model field is intentionally empty until you select a model available to you. Provider model names and availability vary.
+Use a model available to your account/server. Tool support varies by model. If a model does not support tools, turn off **Enable note tools** for plain chat. Remote endpoints require HTTPS; local loopback servers may use HTTP. Redirected streaming endpoints must be replaced with their final API URL.
 
-For cloud APIs, model access and billing are handled by the provider. A consumer chat subscription may not include API credit. The plugin itself has no subscription, paywall, telemetry, or account service.
+Node.js HTTP/HTTPS APIs provide desktop streaming. This release is not available on mobile. Windows Obsidian has been exercised live; macOS/Linux application testing remains outstanding even when cross-platform CI passes.
 
-The **Larger experience: MechApe** link promotes the author's separate desktop app. Using this Obsidian plugin does not require installing or buying that app. The desktop app's pricing and license are independent of this plugin; a future paid desktop edition would not change this plugin's MIT license or require a desktop purchase to use its existing features. No desktop purchase or license activation is implemented in the plugin.
+## Skills and context
 
-**Testing status:** Ollama, an OpenAI-compatible endpoint, and OpenRouter have passed live note-tool tests. Anthropic authenticated model discovery succeeds, but chat testing is blocked by insufficient API credits on the test account; its tool protocol remains fixture-tested. See [TESTING.md](TESTING.md) for exact coverage and platform limitations.
+Type `/` at the beginning of your draft to choose a skill. Filter by name or ID, select with arrow keys and Enter, or click a result. Enter activates the skill without sending a message. The active skill button also opens the menu. Create, edit, and duplicate profiles in Settings.
 
-If a model does not support tool calling, disable **Enable note tools**. You can still chat and attach a note. API replies currently appear as complete messages rather than token-by-token streaming.
+| Skill | Purpose | Note proposals |
+| --- | --- | --- |
+| Vault assistant | Find connections and organize notes | Reviewed writes |
+| Writer & editor | Draft and revise while preserving intent | Reviewed writes |
+| Research librarian | Compare evidence and cite notes | Read-only |
+| Project planner | Identify next actions and blockers | Reviewed writes |
+
+Skills are instructions, not executable scripts. Write permission is enforced by the host. Changing model, provider, skill, project, or access settings starts fresh model context. **Lock project** prevents folder browsing and project-picker actions from changing scope; unlock it to choose another folder. **Attach context** uses the selected folder or active Markdown note. The context chip shows the note or folder, with its full path on hover.
 
 ## Working with notes
 
-Choose **Whole vault** or a project folder. Paths returned by tools are relative to the vault root, including the project prefix. Examples:
+Try “Find unfinished tasks in this project” or “Read my outline and suggest improvements.” Tool paths are vault-relative and include the project prefix. Choosing a folder does not automatically read or transmit all its files.
 
-- “Find unfinished tasks in this project.”
-- “Read my outline and suggest three ways to strengthen it.”
-- “Create `Projects/My book/Scene ideas.md` based on these notes.”
-- “Update the project plan with the next steps we agreed on.”
+Every proposed create/update opens a review dialog. **Apply change** writes; **Reject** leaves the vault unchanged. Creation refuses existing files; updates require a prior read and refuse to overwrite a concurrent edit. Hidden paths, traversal paths, and non-Markdown files are inaccessible. There are no delete, shell, or web-browsing tools.
 
-The assistant reads notes through tools. A proposed write opens a dialog showing the current and proposed contents. **Apply change** writes it; **Reject** leaves it alone. New-note creation refuses existing paths, and updates require reading the note first. Hidden files, traversal paths, and non-Markdown files are inaccessible. There are no delete, shell, or web-browsing tools.
+Excluded folders default to `Templates,Private` and apply to model-driven search, listing, reading, attachments, and writing. **Save** explicitly exports the visible transcript into the selected project.
 
-Excluded folders default to `Templates,Private` and apply to model-driven listing, reading, searching, attachments, and writing. Configure them for your own vault. The explicit **Save** chat action writes your transcript into the selected project.
+## History and privacy
 
-## Privacy and storage
+- No telemetry, background indexing, automatic model downloads, or remote UI assets.
+- Provider requests occur when you send a message or refresh models. Clicking the desktop link opens the website.
+- Remote providers receive your message, skill instructions, project context, attached notes, and note excerpts retrieved by tools. Local endpoints receive the same payload locally; their own upstream behavior depends on your server.
+- New installations keep API keys in memory by default. **Remember API keys** opts into plain-text storage in the plugin’s `data.json`. Existing saved-key installations retain that preference until you turn it off. Vault sync/backups may copy this file. Never commit it or share it publicly.
+- Transcripts and unsent drafts are automatically stored as plain text in the plugin’s `history.json`. Vault sync/backups may copy this file. History contains user/assistant display text, project paths, drafts, and project-lock state; it does not intentionally copy connection credentials, tool-result payloads, or approval state. Any sensitive text you type or receive can still appear in transcripts.
+- **New** preserves the previous conversation in History. Reopening restores the latest chat. Restoring history displays text and draft but starts fresh model context: old tool results/approvals are not replayed. Missing or currently excluded projects cannot be restored. Existing excluded content may still exist in previously saved history files.
+- **Stop** closes the active desktop stream and prevents further processing and tool actions. Partial text is kept. Already-applied note changes remain; provider-side billing may still apply to work already performed. Requests have a 120-second timeout.
+- Text appears incrementally; Markdown formatting is applied when a response completes or stops. Image embeds and raw HTML are removed/escaped to avoid automatic remote image loading.
 
-- No telemetry, background indexing, automatic downloads, or third-party fonts/assets.
-- Network calls happen when you send a message or click **Refresh models**. The full-app link opens only when clicked.
-- With a local endpoint, this plugin sends the request to that endpoint. A custom server or model provider may have its own data handling.
-- With a remote endpoint, messages, skill instructions, attached notes, and notes/excerpts retrieved by tools are sent to that provider. Choose a narrower project and exclusions to limit access.
-- Keys and settings are stored through Obsidian's plugin data API in **plain text** in `data.json`. They are not encrypted. Do not share this file, commit it, or put keys into shared vault configurations. Whether it syncs depends on your sync/backup configuration.
-- Chats stay in memory while the sidebar view is open. **Save** exports a Markdown transcript. Closing/reloading the view loses unsaved conversations.
-- **Stop** cancels further processing and tool actions. Obsidian's `requestUrl` does not abort the underlying HTTP request; the provider may finish and charge for a request already sent. Requests time out in the UI after 120 seconds.
-- Model output is rendered without image embeds or raw HTML so replies do not automatically load external images.
+## Limits and verification
 
-## Limits in 0.1.1
+Search is literal text search rather than embeddings. Search scans up to 300 notes and returns up to 20 results with pagination; listing returns up to 100 paths per page. Note operations are limited to 60,000 characters and the agent to 12 tool rounds per turn. Streaming responses are bounded to 4,000,000 characters of transport data. History has no automatic expiration; monitor plugin-folder storage for long-running use.
 
-Search is literal text search, not embeddings. Each search scans up to 300 notes and returns up to 20 results with pagination. Listing returns up to 100 paths per page. Reading/writing a note is limited to 60,000 characters. Conversations have a bounded payload and a maximum of 12 tool rounds per turn. These limits keep a small sidebar assistant predictable; very large projects may need narrower folders or requests. Applied changes remain saved if a later request fails or is stopped; the next message then starts with fresh context.
+Earlier live tests covered Ollama, OpenRouter, and Ollama’s OpenAI-compatible endpoint, including approved/rejected note operations. The new streaming UI was exercised live with OpenRouter. Direct Anthropic model discovery worked, but live chat/tool tests remain blocked by insufficient API credits on the test account. Anthropic streaming and tool assembly are fixture-tested, not live-certified. See [TESTING.md](TESTING.md).
 
-## Development
+## Development and release
 
 ```sh
 npm ci
 npm test
-npm run build
 npm run package
 ```
 
-`npm run dev` rebuilds on source changes. `main.js` is a CommonJS bundle with Obsidian kept external. There are no runtime npm dependencies. Unit tests cover path boundaries, project scoping, approvals, stale edits, read-only skills, provider tool protocols, cancellation, and the tool loop.
+The CommonJS bundle includes the pinned [shared MechApe core](SHARED-CORE.md). Only `obsidian`, `node:http`, and `node:https` remain external; Node modules load only on the desktop streaming path. No npm install is needed in a user’s vault. Packaging validates metadata, runtime imports, individual assets, and SHA256 checksums.
 
-See [RELEASING.md](RELEASING.md) for public-release preparation, [TESTING.md](TESTING.md) for verified behavior and remaining checks, and [SUBMISSION.md](SUBMISSION.md) for listing fields and draft release copy. Build output is generated, not committed. Packaging validates release metadata and writes `dist/SHA256SUMS.txt`.
+See [RELEASING.md](RELEASING.md) and [SUBMISSION.md](SUBMISSION.md). Build output, credentials, and vault/history files are not committed. The experimental Image Studio bridge is excluded from 0.1.6.
 
-## License
+## License and support
 
-MIT. Copyright (c) 2026 Coda Languez. This is a companion project to [MechApe](https://codalanguez.com/mechape/), not an official Obsidian product.
-
-## Support development
-
-MechApe for Obsidian is free. [Leave an optional tip on PayPal](https://codalanguez.com/go/tipjar) to support development. Tips do not unlock features or purchase the desktop edition.
+MIT. Copyright (c) 2026 Coda Languez. This is an independent companion, not an official Obsidian product. Optional financial support is exposed through the manifest’s `fundingUrl`; tips do not unlock features or purchase the desktop edition.

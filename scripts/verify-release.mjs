@@ -16,7 +16,9 @@ assert.equal(typeof manifest.isDesktopOnly, 'boolean');
 for (const file of ['README.md', 'LICENSE', 'RELEASING.md']) assert.ok((await readFile(file, 'utf8')).trim());
 const bundle = await readFile('main.js', 'utf8');
 const dependencies = [...bundle.matchAll(/require\(["']([^"']+)["']\)/g)].map(match => match[1]);
-assert.deepEqual([...new Set(dependencies)], ['obsidian'], 'Runtime must only require Obsidian.');
+assert.deepEqual([...new Set(dependencies)].sort(), ['node:http', 'node:https', 'obsidian'], 'Only Obsidian and the desktop streaming built-ins may remain external.');
+assert.equal(manifest.isDesktopOnly, true, 'Node streaming requires a desktop-only manifest.');
+assert.ok(!/StudioConnection|studio-send|studio-retrieve|Leave a tip on PayPal/.test(bundle), 'Exclude unfinished Studio integration and in-plugin donation links.');
 const hashes = [];
 for (const file of ['main.js', 'manifest.json', 'styles.css']) {
   const bytes = await readFile(file);

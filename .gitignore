@@ -4,3 +4,6 @@ main.js
 dist/
 data.json
 *.log
+
+history.json
+*.tmp
