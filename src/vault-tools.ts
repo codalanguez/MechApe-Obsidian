@@ -14,7 +14,7 @@ export function safePath(value: unknown, folder = false): string {
   if (typeof value !== 'string') throw new Error('A vault-relative path is required.');
   const path = value.trim().replace(/\\/g, '/').replace(/\/$/, '');
   if (!path && folder) return '';
-  if (!path || path.startsWith('/') || /[:\x00-\x1f]/.test(path) || path.split('/').some(p => !p || p.startsWith('.') || /[<>"|?*]/.test(p))) throw new Error('Use a vault-relative path without hidden folders or traversal.');
+  if (!path || path.startsWith('/') || (path.includes(':') || Array.from(path).some(char => char.charCodeAt(0) < 32)) || path.split('/').some(p => !p || p.startsWith('.') || /[<>"|?*]/.test(p))) throw new Error('Use a vault-relative path without hidden folders or traversal.');
   if (!folder && !path.toLowerCase().endsWith('.md')) throw new Error('Only Markdown notes (.md) are supported.');
   return path;
 }

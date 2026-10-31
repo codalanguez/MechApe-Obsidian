@@ -5,6 +5,8 @@ on:
       - '*.*.*'
 permissions:
   contents: write
+  id-token: write
+  attestations: write
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -19,7 +21,14 @@ jobs:
       - run: npm run package
       - name: Verify release version
         run: node -e "if (process.env.GITHUB_REF_NAME !== require('./manifest.json').version) process.exit(1)"
+      - name: Attest release assets
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
       - name: Create draft release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create "$GITHUB_REF_NAME" main.js manifest.json styles.css dist/SHA256SUMS.txt --draft --title "MechApe $GITHUB_REF_NAME" --generate-notes
+        run: gh release create "$GITHUB_REF_NAME" main.js manifest.json styles.css --draft --title "MechApe $GITHUB_REF_NAME" --generate-notes

@@ -4,7 +4,15 @@ A free AI companion in Obsidian’s right sidebar. Connect Ollama, OpenRouter, A
 
 The free Obsidian edition of [MechApe](https://codalanguez.com/mechape/), by Coda Languez. The plugin works independently: no desktop purchase, subscription, activation, or MechApe account is required. Cloud-provider usage fees are separate. A static **Explore MechApe Desktop** link in the plugin promotes the author’s separate paid desktop product; it opens only when clicked.
 
-**Version 0.1.6. Community-directory submission is pending.** Install manually from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases). This release is desktop-only, requires Obsidian 1.14.5 or later, and does not include the experimental Image Studio bridge.
+**Version 0.1.7.** [View the Community directory listing](https://community.obsidian.md/plugins/mechape). Install manually from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases). This release is desktop-only, requires Obsidian 1.14.5 or later, and does not include the experimental Image Studio bridge.
+
+## Screenshots
+
+Fictional demo project and illustrative conversation; no private vault content.
+
+![Project chat](assets/screenshots/project-chat.png)
+
+![Slash skill picker](assets/screenshots/slash-skills.png)
 
 ## Features
 
@@ -72,6 +80,8 @@ Excluded folders default to `Templates,Private` and apply to model-driven search
 
 ## Limits and verification
 
+Folder autocomplete enumerates vault folder paths locally; note listing/search enumerates Markdown paths locally, then applies project and exclusion rules before reading contents or returning results to the provider. This is required for the project picker and vault search; there is no background indexing.
+
 Search is literal text search rather than embeddings. Search scans up to 300 notes and returns up to 20 results with pagination; listing returns up to 100 paths per page. Note operations are limited to 60,000 characters and the agent to 12 tool rounds per turn. Streaming responses are bounded to 4,000,000 characters of transport data. History has no automatic expiration; monitor plugin-folder storage for long-running use.
 
 Earlier live tests covered Ollama, OpenRouter, and Ollama’s OpenAI-compatible endpoint, including approved/rejected note operations. The new streaming UI was exercised live with OpenRouter. Direct Anthropic model discovery worked, but live chat/tool tests remain blocked by insufficient API credits on the test account. Anthropic streaming and tool assembly are fixture-tested, not live-certified. See [TESTING.md](TESTING.md).
@@ -84,9 +94,9 @@ npm test
 npm run package
 ```
 
-The CommonJS bundle includes the pinned [shared MechApe core](SHARED-CORE.md). Only `obsidian`, `node:http`, and `node:https` remain external; Node modules load only on the desktop streaming path. No npm install is needed in a user’s vault. Packaging validates metadata, runtime imports, individual assets, and SHA256 checksums.
+The CommonJS bundle includes the pinned [shared MechApe core](SHARED-CORE.md). Only `obsidian`, `node:http`, and `node:https` remain external; The desktop-only bundle imports the Node HTTP modules for streaming. No npm install is needed in a user’s vault. Packaging validates metadata, runtime imports, individual assets, and SHA256 checksums.
 
-See [RELEASING.md](RELEASING.md) and [SUBMISSION.md](SUBMISSION.md). Build output, credentials, and vault/history files are not committed. The experimental Image Studio bridge is excluded from 0.1.6.
+See [RELEASING.md](RELEASING.md) and [SUBMISSION.md](SUBMISSION.md). Build output, credentials, and vault/history files are not committed. The experimental Image Studio bridge is excluded from 0.1.7.
 
 ## License and support
 

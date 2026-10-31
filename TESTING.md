@@ -84,3 +84,12 @@ Provider fixture tests are not equivalent to live service certification. Release
 - Default local Ollama model refresh returned the recoverable connection error during this clean-vault run. No successful new live Ollama conversation is claimed for this candidate. Previous live-provider records below remain historical evidence.
 - Before release isolation, the same chat implementation was exercised with live OpenRouter streaming on Windows. Text appeared incrementally and completion restored Send. Cancellation was verified by automated localhost transport/tool tests and a renderer harness; the attempted live cloud Stop check was interrupted by user activity and is not claimed as passed.
 - Direct Anthropic chat remains blocked by test-account billing. macOS/Linux native app checks and community scanner results remain outstanding.
+
+## Release 0.1.7 review follow-up (October 31)
+
+- All 48 tests passed after replacing untyped stream JSON and saved-setting handling with runtime validation. New regressions reject malformed event fields and invalid Anthropic delta indexes, preserve reasoning metadata, and reject unknown provider names/mistyped settings.
+- Existing localhost streaming Stop, cancelled tool execution, project boundaries, read-only skills, reviewed writes, and concurrent-edit protection still pass.
+- Windows Obsidian 1.14.5, disposable vault: explicitly disabled/re-enabled the candidate; global settings search found Remember API keys and Edit skill. Search navigation rendered the correct controls. Changing Ollama to OpenRouter refreshed the endpoint and model fields. Creating a custom skill refreshed its name and instructions. No credentials were entered and no provider requests were made during these UI checks.
+- Local Obsidian lint identified specialized-helper warnings: replaced createEl calls for span/div with createSpan/createDiv. All source review warnings are addressed without disabling type-safety rules. The ephemeral lint tool was not retained in package dependencies because its transitive development dependencies have advisories.
+- The custom tip-jar URL timed out; the existing direct PayPal destination returned HTTP 200. The manifest now uses that direct destination.
+- Local eslint-plugin-obsidianmd recommended rules and type-aware checks passed with zero errors or warnings after preserving canonical brand names and key labels. The temporary lint configuration/results are kept in ignored dist for this review, not shipped to users.

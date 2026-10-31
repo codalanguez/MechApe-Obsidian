@@ -76,3 +76,21 @@ test('cancelling a streamed tool reply prevents all vault actions', async () => 
   }));
   assert.equal(executed,0);
 });
+
+test('malformed stream fields and invalid Anthropic delta indexes are rejected', () => {
+  for (const chunk of [null, [], { choices: {} }, { choices: [{ delta: { tool_calls: 'bad' } }] }, { choices: [{ delta: { tool_calls: [{ index: 0, function: { arguments: {} } }] } }] }]) {
+    const stream = new ReplyStream('compatible', () => {});
+    assert.throws(() => stream.push(event(chunk)));
+  }
+  for (const index of [-1, 101, '0', null]) {
+    const stream = new ReplyStream('anthropic', () => {});
+    assert.throws(() => stream.push(event({ type: 'content_block_delta', index, delta: { type: 'text_delta', text: 'bad' } })), /index/);
+  }
+});
+
+test('streamed reasoning metadata is retained for provider tool round trips', () => {
+  const stream = new ReplyStream('openrouter', () => {});
+  const details = [{ type: 'reasoning.text', text: 'synthetic reasoning', signature: 'fixture' }];
+  stream.push(event({ choices: [{ delta: { reasoning_details: details, content: 'Done' }, finish_reason: 'stop' }] }) + 'data: [DONE]\n\n');
+  assert.deepEqual(parseResponse('openrouter', stream.finish()).raw?.reasoning_details, details);
+});

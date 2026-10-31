@@ -33,3 +33,7 @@ Official references:
 ## Current verification
 
 See [TESTING.md](TESTING.md) for the live Windows/Ollama test record and outstanding checks. Automated provider fixtures do not establish live cloud-provider compatibility. Keep those limitations visible in the release review.
+
+## Asset provenance
+
+Release tags generate GitHub/Sigstore attestations for main.js, manifest.json and styles.css using actions/attest. Verify downloaded assets with `gh attestation verify main.js --repo codalanguez/MechApe-Obsidian` (repeat for the other two assets). The three installable assets are the only release attachments; local packaging still generates dist/SHA256SUMS.txt for acceptance comparisons.

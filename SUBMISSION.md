@@ -1,9 +1,9 @@
-# Community submission: MechApe 0.1.6
+# Community submission: MechApe 0.1.7
 
 - Repository: https://github.com/codalanguez/MechApe-Obsidian
 - Plugin ID: `mechape` (confirm availability during submission).
 - Name: MechApe. Author: Coda Languez. License: MIT.
-- Version/tag: `0.1.6` (no `v` prefix).
+- Version/tag: `0.1.7` (no `v` prefix).
 - Minimum Obsidian: `1.14.5`; desktop-only.
 - Description: A sidebar AI companion with Ollama, OpenRouter, Anthropic, skill profiles, and project-aware note tools.
 
@@ -13,11 +13,11 @@ The README discloses remote-provider transmission, optional plain-text key stora
 
 ## Submission steps
 
-1. Confirm clean-checkout CI and the `0.1.6` GitHub release with matching individual `main.js`, `manifest.json`, `styles.css`, and supplemental `SHA256SUMS.txt`.
+1. Confirm clean-checkout CI and the `0.1.7` GitHub release with matching individual `main.js`, `manifest.json`, `styles.css` assets and verified GitHub attestations.
 2. Sign in to https://community.obsidian.md and connect the GitHub account owning the repository.
 3. Add the public repository. Confirm the plugin ID is available and review the directory’s developer-policy acknowledgement.
 4. Resolve scanner/reviewer findings; code corrections require a new version and release.
 
-Submission uses the Community directory, not a pull request to the legacy community-plugins JSON mirror. A GitHub release is not community approval. Directory submission has not yet been performed.
+Submission uses the Community directory, not a pull request to the legacy community-plugins JSON mirror. A GitHub release is not community approval. The listing is published at https://community.obsidian.md/plugins/mechape. Version 0.1.7 addresses the initial review warnings; see TESTING.md.
 
 References: [submission process](https://docs.obsidian.md/Plugins/Releasing/Submit%20your%20plugin), [requirements](https://docs.obsidian.md/community-directory/submission-requirements-for-plugins), [developer policies](https://docs.obsidian.md/community-directory/developer-policies).

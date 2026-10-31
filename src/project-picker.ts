@@ -24,7 +24,7 @@ export function renderProjectPicker(container: HTMLElement, app: App, selected: 
   };
   const select = (path: string) => {
     if (busy()) return;
-    close(); void choose(path).catch(error => new Notice(error.message));
+    close(); void choose(path).catch((error: unknown) => new Notice(error instanceof Error ? error.message : 'Could not select project.'));
   };
   const highlight = () => {
     Array.from(results.children).forEach((el, index) => el.setAttribute('aria-selected', String(index === active)));
@@ -82,9 +82,9 @@ class CreateProjectModal extends Modal {
     private choose: (path: string) => Promise<void>) { super(app); }
   onOpen(): void {
     this.titleEl.setText('Create new project');
-    this.contentEl.createEl('p', { text: 'Create an empty vault folder and select it for chat. Use a name or a path such as Projects/My project. Existing notes are not changed.' });
+    this.contentEl.createEl('p', { text: 'Create an empty vault folder and select it for chat. Use a name or a path such as projects/my project. Existing notes are not changed.' });
     const form = this.contentEl.createEl('form');
-    const input = form.createEl('input', { type: 'text', value: this.initial, cls: 'mechape-project-name', attr: { 'aria-label': 'New project folder', placeholder: 'Projects/My project' } });
+    const input = form.createEl('input', { type: 'text', value: this.initial, cls: 'mechape-project-name', attr: { 'aria-label': 'New project folder', placeholder: 'Projects/my project' } });
     const error = form.createDiv({ attr: { role: 'alert' } });
     const actions = form.createDiv('mechape-project-actions');
     const cancel = actions.createEl('button', { text: 'Cancel', type: 'button' }); cancel.onclick = () => this.close();

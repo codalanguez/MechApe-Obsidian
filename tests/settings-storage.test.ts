@@ -25,3 +25,12 @@ test('legacy saved keys migrate without loss; opt-out removes all persisted prov
   assert.equal(reloaded.rememberApiKeys, false);
   for (const connection of Object.values(reloaded.connections)) assert.equal(connection.apiKey, '');
 });
+
+test('untrusted settings cannot inject an unknown provider or mistyped connection values', () => {
+  const settings = loadSettings({ provider: '__proto__', connections: { ollama: { apiKey: 123, model: 'test' } }, toolsEnabled: 'yes', project: 123 });
+  assert.equal(settings.provider, 'ollama');
+  assert.equal(settings.connections.ollama.apiKey, '');
+  assert.equal(settings.connections.ollama.model, 'test');
+  assert.equal(settings.project, '');
+  assert.equal(settings.toolsEnabled, true);
+});

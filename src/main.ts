@@ -1,4 +1,5 @@
-import { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, Modal, Notice, TFile, TFolder, MarkdownRenderer, requestUrl, Platform, type App } from 'obsidian';
+import { objectValue, stringValue } from './validation';
+import { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, Modal, Notice, TFile, TFolder, MarkdownRenderer, requestUrl, Platform, type App, type SettingDefinitionItem } from 'obsidian';
 import { loadSettings, persistedSettings, PROVIDERS, type Settings, type Provider, type Skill } from './config';
 import { listModels, safeErrorData, type Message, type Transport } from './providers';
 import { VaultTools, safePath, type Change, type VaultAccess } from './vault-tools';
@@ -13,7 +14,7 @@ const VIEW = 'mechape-chat';
 const transport: Transport = async request => {
   const result = await requestUrl({ ...request, throw: false });
   // Do not parse HTML error pages or expose response bodies that may contain credentials.
-  return { status: result.status, json: result.status >= 400 ? safeErrorData(result.text) : result.json };
+  return { status: result.status, json: result.status >= 400 ? safeErrorData(result.text) : JSON.parse(result.text) as unknown };
 };
 
 class ReviewModal extends Modal {
@@ -47,7 +48,7 @@ export default class MechApePlugin extends Plugin {
   history!: HistoryStore;
   historyAvailable = true;
   async onload(): Promise<void> {
-    this.settings = loadSettings(await this.loadData());
+    this.settings = loadSettings(await this.loadData() as unknown);
     const historyPath = `${this.manifest.dir}/history.json`;
     this.history = new HistoryStore(json => this.app.vault.adapter.write(historyPath, json));
     try {
@@ -125,7 +126,7 @@ class ChatView extends ItemView {
   private projectLocked = false;
   private chatId: string = newChatId();
   private restoring = false;
-  private draftTimer?: ReturnType<typeof setTimeout>;
+  private draftTimer?: number;
   private streamingReply?: { body: HTMLElement; message: { role: string; content: string }; painted: number };
   constructor(leaf: WorkspaceLeaf, private plugin: MechApePlugin) { super(leaf); }
   getViewType(): string { return VIEW; }
@@ -134,7 +135,7 @@ class ChatView extends ItemView {
   async onOpen(): Promise<void> {
     const root = this.contentEl; root.empty(); root.addClass('mechape-chat');
     const header = root.createDiv('mechape-header');
-    const brand = header.createDiv(); brand.createEl('h2', { text: 'MechApe' }); brand.createEl('span', { text: 'Your vault companion', cls: 'mechape-muted' });
+    const brand = header.createDiv(); brand.createEl('h2', { text: 'MechApe' }); brand.createSpan({ text: 'Your vault companion', cls: 'mechape-muted' });
     const actions = header.createDiv('mechape-actions');
     const fresh = actions.createEl('button', { text: 'New', attr: { 'aria-label': 'Start a new chat' } });
     fresh.onclick = () => { if (this.controller || this.restoring) return; this.reset(); };
@@ -157,7 +158,7 @@ class ChatView extends ItemView {
     this.composer.addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); void this.submit(); } });
     const toolbar = bottom.createDiv('mechape-toolbar');
     this.composer.addEventListener('input', () => {
-      clearTimeout(this.draftTimer); this.draftTimer = setTimeout(() => { void this.persistChat(); }, 300);
+      window.clearTimeout(this.draftTimer); this.draftTimer = window.setTimeout(() => { void this.persistChat(); }, 300);
     });
     this.contextBar = bottom.createDiv('mechape-context-bar'); this.renderContext();
     this.skillPicker = renderSkillPicker(bottom, this.composer, () => this.plugin.settings.skills,
@@ -188,7 +189,7 @@ class ChatView extends ItemView {
     this.controlsSummary.setText(`Chat options · ${PROVIDERS[settings.provider]} · ${projectName}`);
     this.controlsSummary.title = `${PROVIDERS[settings.provider]} · ${settings.connections[settings.provider].model || 'No model selected'} · ${settings.project || 'Whole vault'}. Click to expand or collapse settings.`;
     const select = (label: string, options: [string, string][], current: string, change: (value: string) => void) => {
-      const el = this.controls.createEl('label', { cls: 'mechape-select' }); el.createEl('span', { text: label });
+      const el = this.controls.createEl('label', { cls: 'mechape-select' }); el.createSpan({ text: label });
       const input = el.createEl('select'); for (const [value, text] of options) input.createEl('option', { value, text }); input.value = current;
       input.onchange = () => { change(input.value); void this.plugin.save(); this.reset(); };
     };
@@ -217,7 +218,7 @@ class ChatView extends ItemView {
     if (this.projectLocked) this.controls.querySelectorAll<HTMLInputElement | HTMLButtonElement>('.mechape-project-picker input, .mechape-project-picker button').forEach(el => { el.disabled = true; });
   }
   private reset(): void {
-    clearTimeout(this.draftTimer);
+    window.clearTimeout(this.draftTimer);
     void this.persistChat(); this.chatId = newChatId();
     if (this.composer) this.composer.value = '';
     this.messages = []; this.visible = []; this.contextKey = ''; this.attached = undefined;
@@ -249,7 +250,7 @@ class ChatView extends ItemView {
   }
   private async bubble(role: string, content: string): Promise<void> {
     this.visible.push({ role, content });
-    const item = this.transcript.createDiv('mechape-message'); item.createEl('div', { text: role, cls: 'mechape-message-role' });
+    const item = this.transcript.createDiv('mechape-message'); item.createDiv({ text: role, cls: 'mechape-message-role' });
     const body = item.createDiv('mechape-message-body');
     // Strip image embeds so model-generated content cannot trigger remote tracking requests.
     const rendered = content.replace(/!\[/g, '[').replace(/</g, '&lt;');
@@ -283,7 +284,7 @@ class ChatView extends ItemView {
       || (chat.project && !(this.app.vault.getAbstractFileByPath(chat.project) instanceof TFolder))) {
       new Notice('This chat’s project is missing or excluded. It has not been restored.'); return;
     }
-    clearTimeout(this.draftTimer); this.restoring = true;
+    window.clearTimeout(this.draftTimer); this.restoring = true;
     try {
       this.chatId = chat.id; this.projectLocked = chat.locked; this.plugin.selectedFolder = undefined;
       this.plugin.settings.project = chat.project; await this.plugin.save();
@@ -299,7 +300,7 @@ class ChatView extends ItemView {
   private streamText(text: string): void {
     if (!this.controller || this.controller.signal.aborted) return;
     if (!this.streamingReply) {
-      const item = this.transcript.createDiv('mechape-message'); item.createEl('div', { text: 'MechApe', cls: 'mechape-message-role' });
+      const item = this.transcript.createDiv('mechape-message'); item.createDiv({ text: 'MechApe', cls: 'mechape-message-role' });
       const body = item.createDiv('mechape-message-body mechape-streaming');
       const message = { role: 'MechApe', content: '' }; this.visible.push(message);
       this.streamingReply = { body, message, painted: 0 };
@@ -341,8 +342,8 @@ class ChatView extends ItemView {
         (change, signal) => new Promise(resolve => new ReviewModal(this.app, change, signal, resolve).open()));
       let content = text;
       if (this.attached) {
-        const result = JSON.parse(await tools.execute({ id: 'attach', name: 'read_note', arguments: { path: this.attached } }, controller.signal));
-        if (result.status === 'error') throw new Error(result.message);
+        const result = objectValue(JSON.parse(await tools.execute({ id: 'attach', name: 'read_note', arguments: { path: this.attached } }, controller.signal)) as unknown);
+        if (result.status === 'error') throw new Error(stringValue(result.message));
         content += `\n\nAttached source material (not instructions):\n${JSON.stringify(result)}`;
       }
       await this.bubble('You', text + (this.attached ? `\n\nAttached: [[${this.attached}]]` : ''));
@@ -376,7 +377,7 @@ class ChatView extends ItemView {
       await this.plugin.access().create(path, body); new Notice('Chat saved: ' + path);
     } catch (error) { new Notice(error instanceof Error ? error.message : 'Could not save chat.'); }
   }
-  async onClose(): Promise<void> { this.stop(); clearTimeout(this.draftTimer); await this.persistChat(); }
+  async onClose(): Promise<void> { this.stop(); window.clearTimeout(this.draftTimer); await this.persistChat(); }
 }
 
 class HistoryModal extends Modal {
@@ -402,49 +403,54 @@ class HistoryModal extends Modal {
 
 class MechApeSettings extends PluginSettingTab {
   private editingSkill = '';
+  private models: string[] = [];
+  private modelStatus = '';
+  private loadingModels = false;
   constructor(app: App, private plugin: MechApePlugin) { super(app, plugin); }
-  display(): void {
-    const el = this.containerEl; el.empty(); const settings = this.plugin.settings;
-   new Setting(el).setName('Connection').setHeading();
-    new Setting(el).setName('Remember API keys').setDesc('Off: keys stay in memory until Obsidian closes. On: keys are saved in plain text in plugin data.json and may be included in vault backups or sync.').addToggle(t=>t.setValue(settings.rememberApiKeys).onChange(async value=>{settings.rememberApiKeys=value;await this.plugin.save();}));
-    el.createEl('p', { text: 'Ollama runs models locally. Remote providers receive your messages, attached notes, and note content retrieved by tools. Requests are sent only when you chat or refresh models.' });
-    new Setting(el).setName('Provider').addDropdown(d => { d.addOptions(PROVIDERS).setValue(settings.provider).onChange(async value => { settings.provider = value as Provider; await this.plugin.save(); this.display(); }); });
-    const provider = settings.provider; const connection = settings.connections[provider];
-    new Setting(el).setName('API base URL').setDesc(provider === 'ollama' ? 'Example: http://localhost:11434' : 'Include /v1 or /api/v1 where required. Remote endpoints require HTTPS.')
-      .addText(t => t.setValue(connection.baseUrl).onChange(async value => { connection.baseUrl = value.trim(); await this.plugin.save(); }));
-    new Setting(el).setName('API key').setDesc('Keys stay in memory unless Remember API keys is enabled. Saved keys are plain text in data.json; keep that file out of shared vaults and public backups.')
-      .addText(t => { t.inputEl.type = 'password'; t.inputEl.autocomplete = 'off'; t.setValue(connection.apiKey).onChange(async value => { connection.apiKey = value.trim(); await this.plugin.save(); }); });
-    new Setting(el).setName('Model ID').setDesc('Use a model that supports tool calling for note operations. You can type an ID directly.')
-      .addText(t => t.setValue(connection.model).onChange(async value => { connection.model = value.trim(); await this.plugin.save(); }));
-    const modelArea = el.createDiv();
-    new Setting(el).setName('Available models').addButton(b => b.setButtonText('Refresh models').onClick(async () => {
-      b.setDisabled(true); modelArea.empty();
-      try {
-        const models = await listModels(provider, connection, transport, new AbortController().signal);
-        if (!models.length) modelArea.createEl('p', { text: 'No models returned. For Ollama, install a tool-capable model first.' });
-        else new Setting(modelArea).setName('Choose model').addDropdown(d => { d.addOption('', 'Select a model'); for (const model of models) d.addOption(model, model); d.setValue(connection.model).onChange(async value => { if (value) { connection.model = value; await this.plugin.save(); this.display(); } }); });
-      } catch (error) { modelArea.createEl('p', { text: error instanceof Error ? error.message : 'Could not load models.' }); }
-      finally { b.setDisabled(false); }
-    }));
-    new Setting(el).setName('Vault access').setHeading();
-    new Setting(el).setName('Enable note tools').setDesc('Turn off for plain chat with models that do not support tools. Explicitly attached notes still provide context.')
-      .addToggle(t => t.setValue(settings.toolsEnabled).onChange(async value => { settings.toolsEnabled = value; await this.plugin.save(); }));
-    new Setting(el).setName('Excluded folders').setDesc('Comma-separated vault-relative folders. Their contents are excluded from search, reading, attachments, and model-proposed writes. Hidden folders are always excluded.')
-      .addTextArea(t => t.setValue(settings.excludedFolders).onChange(async value => { settings.excludedFolders = value; await this.plugin.save(); }));
-    new Setting(el).setName('Skill profiles').setHeading();
-    el.createEl('p', { text: 'Skills are reusable system instructions. Select one in chat; changing skills, projects, or providers starts fresh context. The workspace rules and review requirement always apply.' });
+  getSettingDefinitions(): SettingDefinitionItem[] {
+    const settings = this.plugin.settings, provider = settings.provider, connection = settings.connections[provider];
     const selected = settings.skills.find(s => s.id === this.editingSkill) ?? settings.skills[0];
-    new Setting(el).setName('Edit skill').addDropdown(d => { for (const skill of settings.skills) d.addOption(skill.id, skill.name); d.setValue(selected.id).onChange(value => { this.editingSkill = value; this.display(); }); })
-      .addButton(b => b.setButtonText('New skill').onClick(async () => { const skill: Skill = { id: newChatId(), name: 'Custom skill', instructions: 'Describe the assistant’s role, style, and workflow here.', canWrite: false }; settings.skills.push(skill); this.editingSkill = skill.id; await this.plugin.save(); this.display(); }));
-    new Setting(el).setName('Skill name').addText(t => t.setValue(selected.name).onChange(async value => { selected.name = value || 'Untitled skill'; await this.plugin.save(); }));
-    new Setting(el).setName('System instructions').setClass('mechape-skill-instructions').addTextArea(t => { t.inputEl.rows = 9; t.setValue(selected.instructions).onChange(async value => { selected.instructions = value; await this.plugin.save(); }); });
-    new Setting(el).setName('Allow note proposals').setDesc('When disabled, this skill has read-only tools. When enabled, every proposed change still requires Apply in the review dialog.')
-      .addToggle(t => t.setValue(selected.canWrite).onChange(async value => { selected.canWrite = value; await this.plugin.save(); }));
-    new Setting(el).setName('Duplicate or remove').addButton(b => b.setButtonText('Duplicate').onClick(async () => { const copy = { ...selected, id: newChatId(), name: selected.name + ' copy' }; settings.skills.push(copy); this.editingSkill = copy.id; await this.plugin.save(); this.display(); }))
-      .addButton(b => b.setButtonText('Remove').setDisabled(settings.skills.length < 2).onClick(async () => { settings.skills = settings.skills.filter(s => s.id !== selected.id); if (settings.skillId === selected.id) settings.skillId = settings.skills[0].id; this.editingSkill = settings.skills[0].id; await this.plugin.save(); this.display(); }));
-    el.createEl('p', { text: 'Chats and drafts are saved as plain text in the plugin history file. Vault backup or sync may copy this file. Save exports a conversation as a note. Desktop replies stream as they arrive. Stop closes the stream and prevents further actions; partial text is kept. This release supports desktop only.', cls: 'mechape-muted' });
-    new Setting(el).setName('Creative engineering by Coda Languez').setHeading();
-    el.createEl('p', { text: 'MechApe Desktop is a separate paid creative workspace for project files, reusable skills, and local models. This plugin remains free and works independently. Desktop purchases are not open yet.' });
-    el.createEl('a', { text: 'Explore MechApe Desktop', href: 'https://codalanguez.com/mechape/', attr: { target: '_blank', rel: 'noopener noreferrer' } });
+    return [
+      { name: 'Remember API keys', desc: 'Off: keys stay in memory. On: keys are saved in plain text in data.json and may be copied by vault backups or sync.',
+        render: row => { row.addToggle(t => t.setValue(settings.rememberApiKeys).onChange(async value => { settings.rememberApiKeys = value; await this.plugin.save(); })); } },
+      { name: 'Provider', desc: 'Remote providers receive messages, attachments and note excerpts. Requests occur only when you chat or refresh models.',
+        render: row => { row.addDropdown(d => d.addOptions(PROVIDERS).setValue(provider).onChange(async value => {
+          if (!Object.hasOwn(PROVIDERS, value)) return;
+          settings.provider = value as Provider; this.models = []; this.modelStatus = ''; await this.plugin.save(); this.update();
+        })); } },
+      { name: 'API base URL', desc: 'Include /v1 or /api/v1 where required. Remote endpoints require HTTPS.',
+        render: row => { row.addText(t => t.setValue(connection.baseUrl).onChange(async value => { connection.baseUrl = value.trim(); this.models = []; await this.plugin.save(); })); } },
+      { name: 'API key', desc: 'Keys remain in memory unless Remember API keys is enabled. Never share saved keys or commit data.json.',
+        render: row => { row.addText(t => { t.inputEl.type = 'password'; t.inputEl.autocomplete = 'off'; t.setValue(connection.apiKey).onChange(async value => { connection.apiKey = value.trim(); await this.plugin.save(); }); }); } },
+      { name: 'Model ID', desc: 'Choose a tool-capable model for note operations, or turn off note tools for plain chat.',
+        render: row => { row.addText(t => t.setValue(connection.model).onChange(async value => { connection.model = value.trim(); await this.plugin.save(); })); } },
+      { name: 'Available models', desc: this.modelStatus || 'Fetch models from the selected provider.',
+        render: row => { row.addButton(b => b.setButtonText(this.loadingModels ? 'Loading models…' : 'Refresh models').setDisabled(this.loadingModels).onClick(async () => {
+          this.loadingModels = true; this.update();
+          try {
+            const models = await listModels(provider, { ...connection }, transport, new AbortController().signal);
+            if (settings.provider === provider) { this.models = models; this.modelStatus = models.length ? 'Select a model below.' : 'No models returned.'; }
+          } catch (error) { this.modelStatus = error instanceof Error ? error.message : 'Could not load models.'; }
+          finally { this.loadingModels = false; this.update(); }
+        })); } },
+      { name: 'Choose model', visible: this.models.length > 0,
+        render: row => { row.addDropdown(d => { d.addOption('', 'Select a model'); for (const model of this.models) d.addOption(model, model); d.setValue(connection.model).onChange(async value => { if (value) { connection.model = value; await this.plugin.save(); this.update(); } }); }); } },
+      { name: 'Enable note tools', desc: 'Model proposals always require review. Explicit attachments still provide context when tools are off.',
+        render: row => { row.addToggle(t => t.setValue(settings.toolsEnabled).onChange(async value => { settings.toolsEnabled = value; await this.plugin.save(); })); } },
+      { name: 'Excluded folders', desc: 'Comma-separated vault-relative folders excluded from model search, reading, attachments and writes. Hidden folders are always excluded.',
+        render: row => { row.addTextArea(t => t.setValue(settings.excludedFolders).onChange(async value => { settings.excludedFolders = value; await this.plugin.save(); })); } },
+      { name: 'Edit skill', desc: 'Reusable system instructions. Vault permissions and write review always apply.', aliases: ['profiles', 'system prompts'],
+        render: row => { row.addDropdown(d => { for (const skill of settings.skills) d.addOption(skill.id, skill.name); d.setValue(selected.id).onChange(value => { this.editingSkill = value; this.update(); }); })
+          .addButton(b => b.setButtonText('New skill').onClick(async () => { const skill: Skill = { id: newChatId(), name: 'Custom skill', instructions: 'Describe the assistant’s role, style, and workflow here.', canWrite: false }; settings.skills.push(skill); this.editingSkill = skill.id; await this.plugin.save(); this.update(); })); } },
+      { name: 'Skill name', render: row => { row.addText(t => t.setValue(selected.name).onChange(async value => { selected.name = value || 'Untitled skill'; await this.plugin.save(); })); } },
+      { name: 'System instructions', render: row => { row.setClass('mechape-skill-instructions').addTextArea(t => { t.inputEl.rows = 9; t.setValue(selected.instructions).onChange(async value => { selected.instructions = value; await this.plugin.save(); }); }); } },
+      { name: 'Allow note proposals', desc: 'Off means read-only. On still requires Apply in the review dialog for every change.',
+        render: row => { row.addToggle(t => t.setValue(selected.canWrite).onChange(async value => { selected.canWrite = value; await this.plugin.save(); })); } },
+      { name: 'Duplicate or remove skill', render: row => { row.addButton(b => b.setButtonText('Duplicate').onClick(async () => { const copy = { ...selected, id: newChatId(), name: selected.name + ' copy' }; settings.skills.push(copy); this.editingSkill = copy.id; await this.plugin.save(); this.update(); }))
+        .addButton(b => b.setButtonText('Remove').setDisabled(settings.skills.length < 2).onClick(async () => { settings.skills = settings.skills.filter(s => s.id !== selected.id); if (settings.skillId === selected.id) settings.skillId = settings.skills[0].id; this.editingSkill = settings.skills[0].id; await this.plugin.save(); this.update(); })); } },
+      { name: 'Chat history and privacy', desc: 'Chats and drafts are saved in plain text in history.json; backup or sync may copy them. Save exports a note. Stop closes the desktop stream and prevents further actions; partial text is kept.' },
+      { name: 'MechApe Desktop', desc: 'A separate paid creative workspace. This plugin is free and independent; desktop purchases are not open yet.',
+        render: row => { row.controlEl.createEl('a', { text: 'Explore MechApe Desktop', href: 'https://codalanguez.com/mechape/', attr: { target: '_blank', rel: 'noopener noreferrer' } }); } }
+    ];
   }
 }

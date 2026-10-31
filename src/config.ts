@@ -1,3 +1,4 @@
+import { objectValue } from './validation';
 import type { Provider, Connection } from '@mechape/core/providers';
 export type { Provider, Connection } from '@mechape/core/providers';
 export interface Skill { id: string; name: string; instructions: string; canWrite: boolean }
@@ -29,18 +30,35 @@ export const DEFAULTS: Settings = {
   ],
   skillId: 'assistant', project: '', excludedFolders: 'Templates,Private', toolsEnabled: true
 };
-export function loadSettings(data: Partial<Settings> | null): Settings {
+export function loadSettings(raw: unknown): Settings {
   const defaults = structuredClone(DEFAULTS);
-  if (!data) return defaults;
+  if (raw === null || raw === undefined) return defaults;
+  const data = objectValue(raw);
   const connections = defaults.connections;
-  for (const key of Object.keys(PROVIDERS) as Provider[]) connections[key] = { ...connections[key], ...data.connections?.[key] };
-  const skills = Array.isArray(data.skills) && data.skills.length ? data.skills : defaults.skills;
-  return { ...defaults, ...data, connections, skills,
-    rememberApiKeys: typeof data.rememberApiKeys==='boolean'?data.rememberApiKeys:Object.values(connections).some(c=>Boolean(c.apiKey)),
-    provider: data.provider && data.provider in PROVIDERS ? data.provider : 'ollama',
-    skillId: skills.some(s => s.id === data.skillId) ? data.skillId! : skills[0].id };
+  const saved = data.connections === undefined ? {} : objectValue(data.connections);
+  for (const key of Object.keys(PROVIDERS) as Provider[]) {
+    if (saved[key] === undefined) continue;
+    const connection = objectValue(saved[key]);
+    for (const field of ['baseUrl', 'model', 'apiKey'] as const) {
+      if (typeof connection[field] === 'string') connections[key][field] = connection[field];
+    }
+  }
+  const skills: Skill[] = [];
+  if (Array.isArray(data.skills)) for (const rawSkill of data.skills as unknown[]) {
+    const skill = objectValue(rawSkill);
+    if (typeof skill.id === 'string' && typeof skill.name === 'string' && typeof skill.instructions === 'string' && typeof skill.canWrite === 'boolean')
+      skills.push({ id: skill.id, name: skill.name, instructions: skill.instructions, canWrite: skill.canWrite });
+  }
+  const profiles = skills.length ? skills : defaults.skills;
+  return { ...defaults, connections, skills: profiles,
+    rememberApiKeys: typeof data.rememberApiKeys === 'boolean' ? data.rememberApiKeys : Object.values(connections).some(c => Boolean(c.apiKey)),
+    provider: typeof data.provider === 'string' && Object.hasOwn(PROVIDERS, data.provider) ? data.provider as Provider : 'ollama',
+    skillId: typeof data.skillId === 'string' && profiles.some(s => s.id === data.skillId) ? data.skillId : profiles[0].id,
+    project: typeof data.project === 'string' ? data.project : defaults.project,
+    excludedFolders: typeof data.excludedFolders === 'string' ? data.excludedFolders : defaults.excludedFolders,
+    toolsEnabled: typeof data.toolsEnabled === 'boolean' ? data.toolsEnabled : defaults.toolsEnabled
+  };
 }
-
 
 // Return a separate disk snapshot so session-only credentials remain usable
 // in memory, but cannot be persisted by unrelated settings changes.
