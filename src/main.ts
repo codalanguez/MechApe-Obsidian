@@ -1,8 +1,9 @@
-import { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, Modal, Notice, TFile, TFolder, MarkdownRenderer, requestUrl, type App } from 'obsidian';
+import { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, Modal, Notice, TFile, MarkdownRenderer, requestUrl, type App } from 'obsidian';
 import { loadSettings, PROVIDERS, type Settings, type Provider, type Skill } from './config';
 import { listModels, safeErrorData, type Message, type Transport } from './providers';
 import { VaultTools, safePath, type Change, type VaultAccess } from './vault-tools';
 import { runAgent } from './agent';
+import { renderProjectPicker } from './project-picker';
 
 const VIEW = 'mechape-chat';
 const transport: Transport = async request => {
@@ -122,9 +123,13 @@ class ChatView extends ItemView {
     };
     select('Provider', Object.entries(PROVIDERS), settings.provider, value => { settings.provider = value as Provider; });
     select('Skill', settings.skills.map(s => [s.id, s.name]), settings.skillId, value => { settings.skillId = value; });
-    const folders = this.app.vault.getAllLoadedFiles().filter((f): f is TFolder => f instanceof TFolder && !!f.path && !f.path.split('/').some(p => p.startsWith('.'))).map(f => f.path).sort();
-    if (settings.project && !folders.includes(settings.project)) folders.push(settings.project);
-    select('Project', [['', 'Whole vault'], ...folders.map(p => [p, p] as [string, string])], settings.project, value => { settings.project = value; });
+    renderProjectPicker(this.controls, this.app, settings.project, settings.excludedFolders,
+      () => !!this.controller, async value => {
+        if (this.controller || value === settings.project) return;
+        const previous = settings.project; settings.project = value;
+        try { await this.plugin.save(); } catch (error) { settings.project = previous; throw error; }
+        this.reset();
+      });
     const connection = settings.connections[settings.provider];
     let local = false;
     try { local = ['localhost', '127.0.0.1', '[::1]'].includes(new URL(connection.baseUrl).hostname); } catch { /* Settings validation reports malformed URLs on use. */ }
@@ -168,7 +173,7 @@ class ChatView extends ItemView {
     this.contextKey = key;
     const controller = new AbortController(); this.controller = controller;
     this.sendButton.disabled = true; this.stopButton.disabled = false;
-    this.controls.querySelectorAll('select').forEach(input => { input.disabled = true; });
+    this.controls.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>('select, input, button').forEach(input => { input.disabled = true; });
     this.composer.value = '';
     try {
       const excluded = settings.excludedFolders.split(',').map(s => s.trim()).filter(Boolean).map(s => safePath(s, true));
@@ -193,7 +198,7 @@ class ChatView extends ItemView {
       if (!this.composer.value) this.composer.value = text;
     } finally {
       this.controller = undefined; this.sendButton.disabled = false; this.stopButton.disabled = true;
-      this.controls.querySelectorAll('select').forEach(input => { input.disabled = false; }); this.composer.focus();
+      this.controls.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>('select, input, button').forEach(input => { input.disabled = false; }); this.composer.focus();
     }
   }
   private async exportChat(): Promise<void> {
