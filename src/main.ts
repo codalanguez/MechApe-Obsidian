@@ -255,6 +255,6 @@ class MechApeSettings extends PluginSettingTab {
     el.createEl('a', { text: 'Get the full MechApe app', href: 'https://codalanguez.com/mechape/', attr: { target: '_blank', rel: 'noopener noreferrer' } });
     new Setting(el).setName('Support development').setHeading();
     el.createEl('p', { text: 'MechApe for Obsidian is free. Optional tips support development; they do not unlock features or purchase the desktop edition.' });
-    el.createEl('a', { text: 'Leave a tip on PayPal', href: 'https://www.paypal.com/ncp/payment/GBFACZQK4TXBL', attr: { target: '_blank', rel: 'noopener noreferrer' } });
+    el.createEl('a', { text: 'Leave a tip on PayPal', href: 'https://codalanguez.com/go/tipjar', attr: { target: '_blank', rel: 'noopener noreferrer' } });
   }
 }

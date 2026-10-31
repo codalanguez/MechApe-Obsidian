@@ -113,4 +113,4 @@ MIT. Copyright (c) 2026 Coda Languez. This is a companion project to [MechApe](h
 
 ## Support development
 
-MechApe for Obsidian is free. [Leave an optional tip on PayPal](https://www.paypal.com/ncp/payment/GBFACZQK4TXBL) to support development. Tips do not unlock features or purchase the desktop edition.
+MechApe for Obsidian is free. [Leave an optional tip on PayPal](https://codalanguez.com/go/tipjar) to support development. Tips do not unlock features or purchase the desktop edition.
