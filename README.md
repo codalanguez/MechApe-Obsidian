@@ -4,7 +4,7 @@ A free AI companion in Obsidian’s right sidebar. Connect Ollama, OpenRouter, A
 
 The free Obsidian edition of [MechApe](https://codalanguez.com/mechape/), by Coda Languez. The plugin works independently: no desktop purchase, subscription, activation, or MechApe account is required. Cloud-provider usage fees are separate. A static **Explore MechApe Desktop** link in the plugin promotes the author’s separate paid desktop product; it opens only when clicked.
 
-**Version 0.1.8.** [View the Community directory listing](https://community.obsidian.md/plugins/mechape). Install manually from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases). This release is desktop-only, requires Obsidian 1.14.5 or later, and does not include the experimental Image Studio bridge.
+**Version 0.1.9.** [View the Community directory listing](https://community.obsidian.md/plugins/mechape). Install manually from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases). This release is desktop-only, requires Obsidian 1.14.5 or later, and does not include the experimental Image Studio bridge.
 
 ## Screenshots
 

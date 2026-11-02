@@ -405,7 +405,7 @@ class HistoryModal extends Modal {
 class MechApeSettings extends PluginSettingTab {
   private editingSkill = '';
   private pickSkillFiles(folder: boolean, target?: Skill): void {
-    const picker = document.createElement('input');
+    const picker = createEl('input');
     picker.type = 'file'; picker.multiple = !!target;
     if (folder) picker.setAttribute('webkitdirectory', '');
     else if (!target) picker.accept = '.md,.skill,.zip';
