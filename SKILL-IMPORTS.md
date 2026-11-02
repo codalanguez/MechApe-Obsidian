@@ -1,0 +1,9 @@
+# Importing skills and attaching references
+
+Open **Settings → MechApe → Skill profiles**. Choose **Import file** for a Markdown instruction file or a `.skill` / `.zip` package. Choose **Import folder** for a folder containing `SKILL.md` and supporting files. Packages must contain exactly one skill. Import creates a new profile without replacing an existing one, preserves the original instructions and frontmatter, and starts with note proposals disabled. Select the imported skill using the skill chip or `/` in chat.
+
+Under the selected profile, **Attach references** adds UTF-8 text, Markdown, JSON, or code files. Use **Preview** to inspect them or **Remove** to detach them. Remove an existing reference before attaching a replacement with the same name. Duplicating a skill makes independent copies of its references.
+
+References are copies saved in the vault's plugin settings, so vault backup/sync may include them. When the skill is active, their text goes to the selected model alongside your instructions, even when note tools are disabled. References are framed as source data and scripts are never executed. The prompt includes up to 32,768 reference characters per skill and marks truncation or omission. Imports and reference collections are limited to 400 files and 20 MB. Binary and non-UTF-8 files are skipped with a notice; PDF, image, and Office document extraction is not supported.
+
+MechApe Desktop uses the same `SKILL.md` format and accepts folders, `SKILL.md`, `.skill`, and ZIP packages. Open a skill's detail view to attach, preview, or remove text references. Desktop stores copies in the skill folder, and reads those copies when building model context, with the same 32,768-character reference budget. The apps have separate skill libraries; importing does not enable automatic synchronization.

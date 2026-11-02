@@ -7,6 +7,7 @@ import { runAgent } from './agent';
 import { renderProjectPicker } from './project-picker';
 import { ModelCatalog, renderModelPicker } from './model-picker';
 import { renderSkillPicker } from './skill-picker';
+import { importSkillFiles, readPickedFiles, readReferences } from './skill-import';
 import { allowedProject } from './projects';
 import { HistoryStore, parseHistory, newChatId, type ChatRecord } from './history';
 
@@ -403,6 +404,41 @@ class HistoryModal extends Modal {
 
 class MechApeSettings extends PluginSettingTab {
   private editingSkill = '';
+  private pickSkillFiles(folder: boolean, target?: Skill): void {
+    const picker = document.createElement('input');
+    picker.type = 'file'; picker.multiple = !!target;
+    if (folder) picker.setAttribute('webkitdirectory', '');
+    else if (!target) picker.accept = '.md,.skill,.zip';
+    picker.onchange = async () => {
+      if (!picker.files?.length) return;
+      try {
+        const files = await readPickedFiles(Array.from(picker.files));
+        const settings = this.plugin.settings;
+        let skipped: string[];
+        if (target) {
+          const result = readReferences(files);
+          const next = [...(target.references ?? [])];
+          for (const ref of result.references) {
+            if (next.some(r => r.path.toLowerCase() === ref.path.toLowerCase())) throw new Error(`Reference ${ref.path} already exists. Remove it before attaching a replacement.`);
+            next.push(ref);
+          }
+          readReferences(next.map(r => ({ path: r.path, data: new TextEncoder().encode(r.content) })));
+          const previous = target.references; target.references = next;
+          try { await this.plugin.save(); } catch (e) { target.references = previous; throw e; }
+          skipped = result.skipped;
+        } else {
+          const result = importSkillFiles(files, newChatId());
+          const previous = settings.skills; settings.skills = [...previous, result.skill];
+          try { await this.plugin.save(); } catch (e) { settings.skills = previous; throw e; }
+          this.editingSkill = result.skill.id; skipped = result.skipped;
+        }
+        this.update();
+        new Notice(`${target ? 'References attached.' : 'Skill imported. Select it in chat to use it.'}${skipped.length ? ` Skipped ${skipped.length} binary or non-UTF-8 files: ${skipped.join(', ')}` : ''}`);
+      } catch (e) { new Notice(e instanceof Error ? e.message : 'Import failed'); }
+    };
+    picker.click();
+  }
+
   private models: string[] = [];
   private modelStatus = '';
   private loadingModels = false;
@@ -439,6 +475,18 @@ class MechApeSettings extends PluginSettingTab {
         render: row => { row.addToggle(t => t.setValue(settings.toolsEnabled).onChange(async value => { settings.toolsEnabled = value; await this.plugin.save(); })); } },
       { name: 'Excluded folders', desc: 'Comma-separated vault-relative folders excluded from model search, reading, attachments and writes. Hidden folders are always excluded.',
         render: row => { row.addTextArea(t => t.setValue(settings.excludedFolders).onChange(async value => { settings.excludedFolders = value; await this.plugin.save(); })); } },
+      { name: 'Import skill', desc: 'Import Markdown, .skill / ZIP, or a folder containing SKILL.md. Text references are copied into plugin settings. Imports create a new read-only skill.', aliases: ['upload', 'package'],
+        render: row => { row.addButton(b => b.setButtonText('Import file').onClick(() => this.pickSkillFiles(false)))
+          .addButton(b => b.setButtonText('Import folder').onClick(() => this.pickSkillFiles(true))); } },
+      { name: 'Skill references', desc: 'Attach UTF-8 text, Markdown, or code files. Copies are sent to your selected model when active (up to 32K characters per skill). Binary files are skipped; scripts are never executed.', aliases: ['attach', 'knowledge'],
+        render: row => { row.addButton(b => b.setButtonText('Attach references').onClick(() => this.pickSkillFiles(false, selected))); } },
+      ...(selected.references ?? []).map(ref => ({ name: ref.path, desc: `${ref.content.length.toLocaleString()} characters`,
+        render: (row: Setting) => { row.addButton(b => b.setButtonText('Preview').onClick(() => {
+          const modal = new Modal(this.app); modal.titleEl.setText(ref.path); modal.contentEl.createEl('pre', { text: ref.content }); modal.open();
+        })).addButton(b => b.setButtonText('Remove').onClick(async () => {
+          const previous = selected.references; selected.references = previous?.filter(r => r !== ref);
+          try { await this.plugin.save(); this.update(); } catch { selected.references = previous; new Notice('Could not remove reference'); }
+        })); } })),
       { name: 'Edit skill', desc: 'Reusable system instructions. Vault permissions and write review always apply.', aliases: ['profiles', 'system prompts'],
         render: row => { row.addDropdown(d => { for (const skill of settings.skills) d.addOption(skill.id, skill.name); d.setValue(selected.id).onChange(value => { this.editingSkill = value; this.update(); }); })
           .addButton(b => b.setButtonText('New skill').onClick(async () => { const skill: Skill = { id: newChatId(), name: 'Custom skill', instructions: 'Describe the assistant’s role, style, and workflow here.', canWrite: false }; settings.skills.push(skill); this.editingSkill = skill.id; await this.plugin.save(); this.update(); })); } },
@@ -446,7 +494,7 @@ class MechApeSettings extends PluginSettingTab {
       { name: 'System instructions', render: row => { row.setClass('mechape-skill-instructions').addTextArea(t => { t.inputEl.rows = 9; t.setValue(selected.instructions).onChange(async value => { selected.instructions = value; await this.plugin.save(); }); }); } },
       { name: 'Allow note proposals', desc: 'Off means read-only. On still requires Apply in the review dialog for every change.',
         render: row => { row.addToggle(t => t.setValue(selected.canWrite).onChange(async value => { selected.canWrite = value; await this.plugin.save(); })); } },
-      { name: 'Duplicate or remove skill', render: row => { row.addButton(b => b.setButtonText('Duplicate').onClick(async () => { const copy = { ...selected, id: newChatId(), name: selected.name + ' copy' }; settings.skills.push(copy); this.editingSkill = copy.id; await this.plugin.save(); this.update(); }))
+      { name: 'Duplicate or remove skill', render: row => { row.addButton(b => b.setButtonText('Duplicate').onClick(async () => { const copy = { ...structuredClone(selected), id: newChatId(), name: selected.name + ' copy' }; settings.skills.push(copy); this.editingSkill = copy.id; await this.plugin.save(); this.update(); }))
         .addButton(b => b.setButtonText('Remove').setDisabled(settings.skills.length < 2).onClick(async () => { settings.skills = settings.skills.filter(s => s.id !== selected.id); if (settings.skillId === selected.id) settings.skillId = settings.skills[0].id; this.editingSkill = settings.skills[0].id; await this.plugin.save(); this.update(); })); } },
       { name: 'Chat history and privacy', desc: 'Chats and drafts are saved in plain text in history.json; backup or sync may copy them. Save exports a note. Stop closes the desktop stream and prevents further actions; partial text is kept.' },
       { name: 'MechApe Desktop', desc: 'A separate paid creative workspace. This plugin is free and independent; desktop purchases are not open yet.',

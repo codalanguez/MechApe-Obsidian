@@ -4,7 +4,7 @@ A free AI companion in Obsidian’s right sidebar. Connect Ollama, OpenRouter, A
 
 The free Obsidian edition of [MechApe](https://codalanguez.com/mechape/), by Coda Languez. The plugin works independently: no desktop purchase, subscription, activation, or MechApe account is required. Cloud-provider usage fees are separate. A static **Explore MechApe Desktop** link in the plugin promotes the author’s separate paid desktop product; it opens only when clicked.
 
-**Version 0.1.7.** [View the Community directory listing](https://community.obsidian.md/plugins/mechape). Install manually from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases). This release is desktop-only, requires Obsidian 1.14.5 or later, and does not include the experimental Image Studio bridge.
+**Version 0.1.8.** [View the Community directory listing](https://community.obsidian.md/plugins/mechape). Install manually from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases). This release is desktop-only, requires Obsidian 1.14.5 or later, and does not include the experimental Image Studio bridge.
 
 ## Screenshots
 
@@ -13,6 +13,10 @@ Fictional demo project and illustrative conversation; no private vault content.
 ![Project chat](assets/screenshots/project-chat.png)
 
 ![Slash skill picker](assets/screenshots/slash-skills.png)
+
+## Skill imports and references
+
+Import Markdown instructions, a `SKILL.md` folder, or `.skill` / ZIP packages in **Settings → MechApe**. Attach, preview, and remove text references on each profile. References are saved as copies in plugin settings and sent to the selected model whenever the skill is active, up to 32,768 characters per skill. Imported skills start read-only. [Import guide and limits](SKILL-IMPORTS.md).
 
 ## Features
 

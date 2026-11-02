@@ -1,7 +1,8 @@
 import { objectValue } from './validation';
 import type { Provider, Connection } from '@mechape/core/providers';
 export type { Provider, Connection } from '@mechape/core/providers';
-export interface Skill { id: string; name: string; instructions: string; canWrite: boolean }
+export interface SkillReference { path: string; content: string }
+export interface Skill { id: string; name: string; instructions: string; canWrite: boolean; references?: SkillReference[] }
 export interface Settings {
   rememberApiKeys: boolean;
   provider: Provider;
@@ -46,8 +47,15 @@ export function loadSettings(raw: unknown): Settings {
   const skills: Skill[] = [];
   if (Array.isArray(data.skills)) for (const rawSkill of data.skills as unknown[]) {
     const skill = objectValue(rawSkill);
-    if (typeof skill.id === 'string' && typeof skill.name === 'string' && typeof skill.instructions === 'string' && typeof skill.canWrite === 'boolean')
-      skills.push({ id: skill.id, name: skill.name, instructions: skill.instructions, canWrite: skill.canWrite });
+    if (typeof skill.id === 'string' && typeof skill.name === 'string' && typeof skill.instructions === 'string' && typeof skill.canWrite === 'boolean') {
+      const profile: Skill = { id: skill.id, name: skill.name, instructions: skill.instructions, canWrite: skill.canWrite };
+      if (Array.isArray(skill.references)) profile.references = skill.references.map((value: unknown) => {
+        const ref = objectValue(value);
+        if (typeof ref.path !== 'string' || typeof ref.content !== 'string') throw new Error('Invalid skill reference');
+        return { path: ref.path, content: ref.content };
+      });
+      skills.push(profile);
+    }
   }
   const profiles = skills.length ? skills : defaults.skills;
   return { ...defaults, connections, skills: profiles,
