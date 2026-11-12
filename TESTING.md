@@ -1,5 +1,16 @@
 # Verification record
 
+## Release 0.1.10 — November 11, 2026
+
+Published at cd83a67. All 57 tests, strict TypeScript/build/package verification, Windows/macOS/Linux CI and release workflow 43161450184 passed. main.js, manifest.json and styles.css were downloaded and verified with GitHub attestations. Content matches the local accepted build; manifest/styles line endings differ between Windows and Linux.
+
+Live OpenRouter x-ai/grok-4.6 passed catalog discovery, read/create/update and two review callbacks using synthetic in-memory notes. Direct Anthropic chat retains the previously accepted insufficient-credit limitation; automated protocol coverage is not a live test.
+
+Obsidian 1.15.0 disposable release-0.1.10-vault: plugin enable/open/reload, context/connection disclosure, synthetic OpenAI-compatible streamed response, Stop with partial text retained and fresh next context, writing-brief prompt, review-before-save, saved brief, and branch-without-tool-replay all checked. A narrow-sidebar defect hid Send behind the added composer buttons; toolbar wrapping fixed it, then native UI verified Send/Stop remained visible. Production writing vault content was not sent or changed. Test vault/provider fixtures were not packaged.
+
+Earlier records below describe their stated versions and dates, not fresh checks for this release.
+
+
 Automated release verification: October 29, 2026 (America/Denver). Live application checks below were recorded on October 28 unless stated otherwise.
 
 ## Automated checks
