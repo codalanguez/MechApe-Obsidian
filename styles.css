@@ -7,6 +7,8 @@
 .mechape-muted,.mechape-hint { color:var(--text-muted); font-size:var(--font-ui-smaller); line-height:1.5; }
 .mechape-actions,.mechape-toolbar { display:flex; gap:6px; align-items:center; }
 .mechape-actions { flex-wrap:wrap; justify-content:flex-end; }
+.mechape-toolbar { flex-wrap:wrap; min-width:0; }
+.mechape-toolbar button { max-width:100%; white-space:normal; height:auto; min-height:30px; }
 .mechape-context-bar { order:-1; display:flex; align-items:center; gap:6px; min-width:0; }
 .mechape-context-chip { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:var(--font-ui-smaller); color:var(--text-muted); }
 .mechape-context-bar button { height:auto; min-height:28px; font-size:var(--font-ui-smaller); }
