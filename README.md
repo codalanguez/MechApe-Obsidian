@@ -4,7 +4,7 @@ A free AI companion in Obsidian’s right sidebar. Connect Ollama, OpenRouter, A
 
 The free Obsidian edition of [MechApe](https://codalanguez.com/mechape/), by Coda Languez. The plugin works independently: no desktop purchase, subscription, activation, or MechApe account is required. Cloud-provider usage fees are separate. A static **Explore MechApe Desktop** link in the plugin promotes the author’s separate paid desktop product; it opens only when clicked.
 
-**Version 0.1.9.** [View the Community directory listing](https://community.obsidian.md/plugins/mechape). Install manually from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases). This release is desktop-only, requires Obsidian 1.14.5 or later, and does not include the experimental Image Studio bridge.
+**Published version: 0.1.9. Source candidate: 0.1.10 (not yet published).** [View the Community directory listing](https://community.obsidian.md/plugins/mechape). Install manually from [GitHub releases](https://github.com/codalanguez/MechApe-Obsidian/releases). This release is desktop-only, requires Obsidian 1.14.5 or later, and does not include the experimental Image Studio bridge.
 
 ## Screenshots
 
@@ -17,6 +17,14 @@ Fictional demo project and illustrative conversation; no private vault content.
 ## Skill imports and references
 
 Import Markdown instructions, a `SKILL.md` folder, or `.skill` / ZIP packages in **Settings → MechApe**. Attach, preview, and remove text references on each profile. References are saved as copies in plugin settings and sent to the selected model whenever the skill is active, up to 32,768 characters per skill. Imported skills start read-only. [Import guide and limits](SKILL-IMPORTS.md).
+
+## Upcoming 0.1.10
+
+- **Context** shows provider/model destination, permitted project scope, the attached note, active skill/reference names and cloud-cost limitations. Remove the attachment, clear prior model context, or use basic instructions without skill references. Existing vault permissions still apply.
+- **Writing brief** prepares a source-citing prompt. **Review & save brief** opens an editable draft before creating a new note; check citations and claims yourself.
+- **Branch here** preserves the original chat and prepares a new branch with a reviewable transcript in the composer. No historical tool actions are replayed.
+- Approved replacements display changed lines and save the original under the plugin's `recovery` directory before updating. **MechApe: Recover a note** requires another review and rejects stale edits. Recovery files are plaintext and persist until manually removed; vault sync/backups may copy them. Keep a separate vault backup.
+- The funding metadata uses [the branded tip jar](https://codalanguez.com/go/tipjar). Tips remain optional; the plugin remains free.
 
 ## Features
 

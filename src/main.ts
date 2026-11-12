@@ -10,6 +10,8 @@ import { renderSkillPicker } from './skill-picker';
 import { importSkillFiles, readPickedFiles, readReferences } from './skill-import';
 import { allowedProject } from './projects';
 import { HistoryStore, parseHistory, newChatId, type ChatRecord } from './history';
+import { changedLines, providerHelp } from './review';
+import { recoverableReplace, parseRecovery } from './recovery';
 
 const VIEW = 'mechape-chat';
 const transport: Transport = async request => {
@@ -26,6 +28,11 @@ class ReviewModal extends Modal {
     this.modalEl.addClass('mechape-review');
     this.titleEl.setText(this.change.before === null ? 'Create note' : 'Review note update');
     this.contentEl.createEl('p', { text: this.change.path, cls: 'mechape-path' });
+    if (this.change.before !== null) {
+      this.contentEl.createEl('h3', { text: 'Changes (− removed, + added)' });
+      this.contentEl.createEl('pre', { text: changedLines(this.change.before, this.change.after) });
+      this.contentEl.createEl('p', { text: 'An original copy is saved in this vault’s MechApe plugin folder before applying. Use “Recover a note” to review it. Vault sync and backups may copy these originals.' });
+    }
     const comparison = this.contentEl.createDiv('mechape-comparison');
     if (this.change.before !== null) {
       const before = comparison.createDiv(); before.createEl('h3', { text: 'Current note' }); before.createEl('pre', { text: this.change.before });
@@ -80,6 +87,7 @@ export default class MechApePlugin extends Plugin {
     this.addRibbonIcon('bot', 'Open MechApe chat', () => { void this.openChat(); });
     this.addCommand({ id: 'open-chat', name: 'Open chat', callback: () => { void this.openChat(); } });
     this.addCommand({ id: 'ask-current-note', name: 'Ask about active note', callback: () => { void this.openChat(true); } });
+    this.addCommand({ id: 'recover-note', name: 'Recover a note', callback: () => { void this.recoverNote(); } });
     this.addSettingTab(new MechApeSettings(this.app, this));
   }
   onunload(): void { for (const leaf of this.app.workspace.getLeavesOfType(VIEW)) (leaf.view as ChatView).stop(); }
@@ -98,13 +106,50 @@ export default class MechApePlugin extends Plugin {
     return {
       files: () => vault.getMarkdownFiles(), exists: path => !!vault.getAbstractFileByPath(path),
       read: path => vault.read(file(path)),
-      create: async (path, content) => {
+      create: async (path, content, signal) => {
+        signal?.throwIfAborted();
         const parts = path.split('/'); parts.pop(); let current = '';
-        for (const part of parts) { current = current ? current + '/' + part : part; if (!vault.getAbstractFileByPath(current)) await vault.createFolder(current); }
+        for (const part of parts) { signal?.throwIfAborted(); current = current ? current + '/' + part : part; if (!vault.getAbstractFileByPath(current)) await vault.createFolder(current); }
+        signal?.throwIfAborted();
         await vault.create(path, content);
       },
-      replace: async (path, before, after) => { await vault.process(file(path), current => { if (current !== before) throw new Error('The note changed during review. Read it again and make a fresh proposal.'); return after; }); }
+      replace: async (path, before, after, signal) => {
+        if (!this.manifest.dir) throw new Error('Plugin recovery directory unavailable');
+        await recoverableReplace(before, after, async () => {
+          const dir = `${this.manifest.dir}/recovery`;
+          if (!await vault.adapter.exists(dir)) await vault.adapter.mkdir(dir);
+          await vault.adapter.write(`${dir}/${newChatId()}.json`, JSON.stringify({ path, before, saved: Date.now() }));
+        }, transform => vault.process(file(path), transform), signal);
+      }
     };
+  }
+  private async recoverNote(): Promise<void> {
+    const modal = new Modal(this.app); modal.titleEl.setText('Recover a note');
+    modal.contentEl.createEl('p', { text: 'Original copies are retained as plaintext in the plugin folder and may be copied by vault sync or backups. Excluded notes are not shown. Recovery requires review and refuses a note that changed during review.' });
+    try {
+      const dir = `${this.manifest.dir}/recovery`;
+      const files = await this.app.vault.adapter.exists(dir) ? (await this.app.vault.adapter.list(dir)).files : [];
+      if (!files.length) modal.contentEl.createEl('p', { text: 'No recovery copies yet.' });
+      for (const entry of files.reverse()) {
+        const stat = await this.app.vault.adapter.stat(entry);
+        if (!entry.endsWith('.json') || !stat || stat.size > 400000) continue;
+        const data = parseRecovery(await this.app.vault.adapter.read(entry), this.settings.excludedFolders);
+        if (!data) continue;
+        const path = safePath(data.path), original = data.before;
+        modal.contentEl.createEl('button', { text: `${path} · ${new Date(Number(data.saved)).toLocaleString()}` }).onclick = async () => {
+          try {
+            const access = this.access(); const before = access.exists(path) ? await access.read(path) : null;
+            new ReviewModal(this.app, { path, before, after: original }, new AbortController().signal, accepted => {
+              if (!accepted) return;
+              if (!allowedProject(path, this.settings.excludedFolders)) { new Notice('This note is now excluded.'); return; }
+              void (before === null ? access.create(path, original) : access.replace(path, before, original))
+                .then(() => { new Notice('Recovered: ' + path); modal.close(); }).catch(() => new Notice('Recovery failed. The note may have changed; review again.'));
+            }).open();
+          } catch { new Notice('Could not read this recovery copy.'); }
+        };
+      }
+    } catch { modal.contentEl.createEl('p', { text: 'Recovery copies could not be read. Existing files were preserved.' }); }
+    modal.open();
   }
 }
 
@@ -121,6 +166,7 @@ class ChatView extends ItemView {
   private visible: { role: string; content: string }[] = [];
   private attached?: string;
   private contextKey = '';
+  private basicSkill = false;
   private modelCatalog = new ModelCatalog();
   private skillPicker?: ReturnType<typeof renderSkillPicker>;
   private contextBar?: HTMLElement;
@@ -172,6 +218,12 @@ class ChatView extends ItemView {
         this.status.setText('');
       });
     const attach = toolbar.createEl('button', { text: 'Attach context', attr: { title: 'Use the selected folder as the project, or attach the active Markdown note.' } });
+    toolbar.createEl('button', { text: 'Context', attr: { title: 'Inspect what the model can receive' } }).onclick = () => this.inspectContext();
+    toolbar.createEl('button', { text: 'Writing brief' }).onclick = () => {
+      if (this.controller) return;
+      this.composer.value = 'Create a writing brief from the attached note and relevant project notes. Read sources first. Include: purpose, established facts, open questions, scene or revision plan, and source note links. Label inferences and missing information. Return a draft only; do not create or update any notes.';
+      this.composer.focus();
+    };
     attach.onclick = () => {
       if (this.plugin.selectedFolder) { void this.attachFolder(this.plugin.selectedFolder); return; }
       const file = this.app.workspace.getActiveFile(); if (file) this.attach(file); else new Notice('Select a folder or open a Markdown note first.');
@@ -256,12 +308,20 @@ class ChatView extends ItemView {
     // Strip image embeds so model-generated content cannot trigger remote tracking requests.
     const rendered = content.replace(/!\[/g, '[').replace(/</g, '&lt;');
     await MarkdownRenderer.render(this.app, rendered, body, this.attached ?? '', this);
+    const branchIndex = this.visible.length;
+    if (role === 'MechApe') item.createEl('button', { text: 'Review & save brief' }).onclick = () => this.reviewBrief(content);
+    item.createEl('button', { text: 'Branch here' }).onclick = () => { void this.branchChat(branchIndex); };
     this.transcript.scrollTop = this.transcript.scrollHeight;
     if (!this.restoring) await this.persistChat();
   }
   private renderContext(): void {
     if (!this.contextBar) return;
     this.contextBar.empty();
+    const cfg = this.plugin.settings, connection = cfg.connections[cfg.provider];
+    let local = false;
+    try { local = ['localhost', '127.0.0.1', '[::1]'].includes(new URL(connection.baseUrl).hostname); } catch { /* invalid endpoint */ }
+    this.contextBar.createSpan({ cls: 'mechape-context-chip', text: `${local ? 'Local' : 'Cloud · API costs extra'} · ${connection.model || 'Choose a model'}` });
+    if (this.basicSkill) this.contextBar.createSpan({ cls: 'mechape-context-chip', text: 'Basic instructions · no skill references' });
     const path = this.attached || this.plugin.settings.project;
     this.contextBar.createSpan({ cls: 'mechape-context-chip', text: `${this.attached ? 'Note' : 'Folder'}: ${path?.split('/').pop() || 'Whole vault'}`, attr: { title: path || 'Whole vault' } });
     const lock = this.contextBar.createEl('button', { text: this.projectLocked ? 'Locked' : 'Lock project', attr: {
@@ -270,6 +330,63 @@ class ChatView extends ItemView {
     } });
     lock.disabled = !!this.controller;
     lock.onclick = () => { if (this.controller) return; this.projectLocked = !this.projectLocked; this.renderControls(); void this.persistChat(); };
+  }
+  private inspectContext(): void {
+    const modal = new Modal(this.app), s = this.plugin.settings, c = s.connections[s.provider];
+    modal.titleEl.setText('Context and connection');
+    let destination = 'Invalid endpoint'; try { destination = new URL(c.baseUrl).origin; } catch { /* no credentials in display */ }
+    modal.contentEl.createEl('p', { text: `${PROVIDERS[s.provider]} · ${c.model || 'No model selected'} · ${destination}` });
+    modal.contentEl.createEl('p', { text: `Project access: ${s.project || 'Whole vault'}. Excluded folders: ${s.excludedFolders || 'None'}. Tools ${s.toolsEnabled ? 'enabled: the model may request allowed notes as it works' : 'disabled'}.` });
+    modal.contentEl.createEl('p', { text: `Attached note: ${this.attached || 'None'}. Prior model messages: ${this.messages.length}.` });
+    modal.contentEl.createEl('p', { text: 'Removing an attachment does not erase its content from prior model messages. Clear prior model context to exclude earlier content from future requests. Nothing already sent can be recalled from a provider.' });
+    const skill = s.skills.find(v => v.id === s.skillId);
+    modal.contentEl.createEl('p', { text: `Skill: ${skill?.name || 'None'}. References: ${skill?.references?.map(v => v.path).join(', ') || 'None'}. Skill instructions and reference contents are sent with the request.` });
+    modal.contentEl.createEl('p', { text: this.basicSkill ? 'Basic instructions enabled: custom skill instructions and references will be omitted. Existing read/write permissions still apply.' : 'The selected skill is active.' });
+    modal.contentEl.createEl('button', { text: this.basicSkill ? 'Use selected skill' : 'Use basic instructions; omit skill references' }).onclick = () => {
+      if (this.controller) return;
+      this.basicSkill = !this.basicSkill; this.messages = []; this.contextKey = ''; this.renderContext();
+      this.status.setText('Skill context changed. Next message starts fresh model context; transcript retained.'); modal.close();
+    };
+    modal.contentEl.createEl('button', { text: 'Clear prior model context' }).onclick = () => {
+      if (this.controller) return;
+      this.messages = []; this.contextKey = ''; this.status.setText('Prior model context cleared; transcript retained.'); modal.close();
+    };
+    modal.contentEl.createEl('p', { text: 'Remote endpoints receive messages and requested note content. Cloud usage is billed by your provider; this plugin does not currently report an authoritative per-reply price. No price shown means unavailable, not free.' });
+    modal.contentEl.createEl('button', { text: 'Remove attached note' }).onclick = () => { if (!this.controller) { this.attached = undefined; this.attachment.empty(); this.renderContext(); modal.close(); } };
+    modal.contentEl.createEl('button', { text: 'Test model discovery' }).onclick = async () => {
+      try { const models = await listModels(s.provider, c, transport, new AbortController().signal); new Notice(`Connection succeeded: ${models.length} models. This does not test paid generation.`); }
+      catch (error) { new Notice(providerHelp(error instanceof Error ? error.message : 'Connection failed')); }
+    };
+    modal.contentEl.createEl('p', { text: 'Getting started: select a provider in Settings → MechApe, choose a model, attach a note, then try “Summarize this note and cite its source.” Review all proposed changes.' });
+    modal.open();
+  }
+  private reviewBrief(content: string): void {
+    if (this.controller) return;
+    const project = this.plugin.settings.project;
+    const modal = new Modal(this.app); modal.titleEl.setText('Review writing brief');
+    modal.contentEl.createEl('p', { text: 'Check facts and source links, and edit the draft before saving. This creates a new note.' });
+    const editor = modal.contentEl.createEl('textarea', { cls: 'mechape-brief-editor', attr: { 'aria-label': 'Editable writing brief' } }); editor.value = content; editor.rows = 18;
+    modal.contentEl.createEl('button', { text: 'Save reviewed brief' }).onclick = async () => {
+      try {
+        if (!allowedProject(project, this.plugin.settings.excludedFolders)) throw new Error('Project is excluded');
+        const root = safePath(project, true);
+        const path = `${root ? root + '/' : ''}Writing brief ${newChatId()}.md`;
+        await this.plugin.access().create(path, editor.value); modal.close(); new Notice('Brief saved: ' + path);
+      } catch { new Notice('Could not save brief. Your draft remains open.'); }
+    };
+    modal.open();
+  }
+  private async branchChat(count: number): Promise<void> {
+    if (this.controller || this.restoring) return;
+    await this.persistChat();
+    const messages = this.visible.slice(0, count).map(m => ({ ...m }));
+    this.chatId = newChatId(); this.messages = []; this.contextKey = '';
+    this.attached = undefined; this.attachment.empty(); this.renderContext();
+    this.visible = []; this.transcript.empty();
+    for (const message of messages) await this.bubble(message.role, message.content);
+    this.composer.value = 'Continue from this transcript:\n\n' + messages.map(m => `${m.role}: ${m.content}`).join('\n\n');
+    this.status.setText('Branch created. Review the transcript in the composer before sending. Old tool actions are not replayed.');
+    await this.persistChat();
   }
   private async persistChat(): Promise<void> {
     if (this.restoring || !this.composer || !this.plugin.historyAvailable) return;
@@ -321,6 +438,9 @@ class ChatView extends ItemView {
     if (text !== undefined) reply.message.content = text;
     reply.body.empty(); reply.body.classList.remove('mechape-streaming');
     await MarkdownRenderer.render(this.app, reply.message.content.replace(/!\[/g, '[').replace(/</g, '&lt;'), reply.body, this.attached ?? '', this);
+    reply.body.createEl('button', { text: 'Review & save brief' }).onclick = () => this.reviewBrief(reply.message.content);
+    const count = this.visible.length;
+    reply.body.createEl('button', { text: 'Branch here' }).onclick = () => { void this.branchChat(count); };
     await this.persistChat();
   }
   private async submit(): Promise<void> {
@@ -329,6 +449,7 @@ class ChatView extends ItemView {
     const text = this.composer.value.trim(); if (!text || this.controller) return;
     const settings = structuredClone(this.plugin.settings);
     const skill = settings.skills.find(s => s.id === settings.skillId) ?? settings.skills[0];
+    if (this.basicSkill) { skill.instructions = 'Help the user with the selected project. Cite source notes and distinguish evidence from suggestions.'; skill.references = []; }
     const key = JSON.stringify([settings.provider, settings.connections[settings.provider].baseUrl, settings.connections[settings.provider].model, skill, settings.project, settings.excludedFolders, settings.toolsEnabled]);
     if (this.contextKey && key !== this.contextKey) this.reset();
     this.contextKey = key;
@@ -356,7 +477,7 @@ class ChatView extends ItemView {
     } catch (error) {
       await this.finishStream();
       const message = controller.signal.aborted ? 'Stopped. Any changes already applied remain saved.' : error instanceof Error ? error.message : 'Request failed. Check the provider configuration.';
-      this.status.setText(message);
+      this.status.setText(controller.signal.aborted ? message : message + ' ' + providerHelp(message));
       // A failed tool loop may have applied writes. Discard protocol history so a retry reads the vault afresh.
       this.messages = [];
       await this.bubble('Status', message + '\n\nThe next message starts with fresh context.');

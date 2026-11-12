@@ -75,3 +75,6 @@
 .mechape-skill-instructions .setting-item-control { margin-top:10px; }
 .mechape-skill-instructions textarea { width:100%; line-height:1.5; }
 .mechape-chat button:focus-visible,.mechape-chat select:focus-visible,.mechape-chat textarea:focus-visible { outline:2px solid var(--interactive-accent); outline-offset:2px; }
+
+.mechape-brief-editor { width: 100%; resize: vertical; }
+.mechape-review pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 45vh; overflow: auto; }

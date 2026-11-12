@@ -4,8 +4,8 @@ export interface VaultAccess {
   files(): Note[];
   read(path: string): Promise<string>;
   exists(path: string): boolean;
-  create(path: string, content: string): Promise<void>;
-  replace(path: string, before: string, after: string): Promise<void>;
+  create(path: string, content: string, signal?: AbortSignal): Promise<void>;
+  replace(path: string, before: string, after: string, signal?: AbortSignal): Promise<void>;
 }
 export interface Change { path: string; before: string | null; after: string }
 export type Review = (change: Change, signal: AbortSignal) => Promise<boolean>;
@@ -82,8 +82,8 @@ export class VaultTools {
       const accepted = await this.review({ path, before, after: a.content }, signal);
       signal.throwIfAborted();
       if (!accepted) return JSON.stringify({ status: 'rejected', path, message: 'User rejected this change. Do not retry unless asked.' });
-      if (before === null) await this.vault.create(path, a.content);
-      else await this.vault.replace(path, before, a.content);
+      if (before === null) await this.vault.create(path, a.content, signal);
+      else await this.vault.replace(path, before, a.content, signal);
       this.snapshots.set(path, a.content);
       return JSON.stringify({ status: 'applied', path });
     } catch (error) {
