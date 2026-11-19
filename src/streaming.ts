@@ -107,11 +107,12 @@ export class ReplyStream {
 }
 
 /** Desktop-only transport. No redirects, credential forwarding or TLS overrides. */
-export function desktopStreamTransport(provider: Provider, onText: (text: string) => void): Transport {
+export function desktopStreamTransport(provider?: Provider, onText?: (text: string) => void): Transport {
   return (request: HttpRequest, signal?: AbortSignal) => new Promise((resolve, reject) => {
     signal?.throwIfAborted();
     const http = new URL(request.url).protocol === 'https:' ? nodeHttps : nodeHttp;
-    const collector = new ReplyStream(provider, text => { if (!signal?.aborted) onText(text); });
+    const collector = provider && onText ? new ReplyStream(provider, text => { if (!signal?.aborted) onText(text); }) : undefined;
+    let body = '', bytes = 0;
     let response: import('node:http').IncomingMessage | undefined;
     let settled = false;
     const finish = (error?: Error, value?: { status: number; json: unknown }) => {
@@ -122,19 +123,29 @@ export function desktopStreamTransport(provider: Provider, onText: (text: string
     const req = http.request(request.url, { method: request.method, headers: { ...request.headers, 'Accept-Encoding': 'identity' } }, incoming => {
       response = incoming;
       const status = incoming.statusCode || 500, decoder = new TextDecoder(); let errorBody = '';
-      if (status >= 300 && status < 400) { finish(new Error('The streaming endpoint redirected. Set the final API URL in MechApe settings.')); return; }
+      if (status >= 300 && status < 400) { finish(new Error('The provider endpoint redirected. Set the final API URL in MechApe settings.')); return; }
       incoming.on('data', (chunk: Uint8Array) => {
         if (settled || signal?.aborted) return;
         try {
           const text = decoder.decode(chunk, { stream: true });
-          if (status >= 400) errorBody = (errorBody + text).slice(0, 65536); else collector.push(text);
+          bytes += chunk.byteLength;
+          if (bytes > 4_000_000) throw new Error('Provider response exceeds the size limit.');
+          if (status >= 400) errorBody = (errorBody + text).slice(0, 65536);
+          else if (collector) collector.push(text);
+          else body += text;
         } catch (error) { finish(error instanceof Error ? error : new Error('Invalid provider stream.')); }
       });
       incoming.on('end', () => {
         if (settled) return;
         try {
           if (status >= 400) finish(undefined, { status, json: safeErrorData(errorBody) });
-          else { collector.push(decoder.decode()); finish(undefined, { status, json: collector.finish() }); }
+          else if (collector) { collector.push(decoder.decode()); finish(undefined, { status, json: collector.finish() }); }
+          else {
+            let json: unknown;
+            try { json = JSON.parse(body + decoder.decode()) as unknown; }
+            catch { throw new Error('The provider returned invalid JSON.'); }
+            finish(undefined, { status, json });
+          }
         } catch (error) { finish(error instanceof Error ? error : new Error('Invalid provider stream.')); }
       });
       incoming.on('error', () => finish(new Error('The provider connection was interrupted. Partial text was kept.')));

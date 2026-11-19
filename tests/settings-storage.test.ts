@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { loadSettings, persistedSettings } from '../src/config';
+import { loadSettings, persistedSettings, restoreCredentials, storeCredential } from '../src/config';
 
 test('session keys never survive settings save and reload, without erasing the active connection', () => {
   const settings = loadSettings(null);
@@ -19,8 +19,19 @@ test('legacy saved keys migrate without loss; opt-out removes all persisted prov
   const raw: any = structuredClone(legacy); delete raw.rememberApiKeys;
   const settings = loadSettings(raw);
   assert.equal(settings.rememberApiKeys, true);
-  assert.equal(persistedSettings(settings).connections.anthropic.apiKey, 'synthetic-legacy-key');
+  const secrets = new Map<string, string>();
+  const store = { getSecret: (id: string) => secrets.get(id) ?? null, setSecret: (id: string, value: string) => { secrets.set(id, value); } };
+  assert.equal(restoreCredentials(store, settings), true);
+  const disk = persistedSettings(settings);
+  assert.equal(JSON.stringify(disk).includes('synthetic-legacy-key'), false);
+  const restored = loadSettings(disk);
+  restored.connections.compatible.baseUrl = 'https://other.test';
+  restoreCredentials(store, restored);
+  assert.equal(restored.connections.anthropic.apiKey, 'synthetic-legacy-key');
+  assert.equal(restored.connections.compatible.apiKey, '');
   settings.rememberApiKeys = false;
+  storeCredential(store, settings, 'anthropic');
+  assert.equal(secrets.get('mechape-anthropic-credential'), '');
   const reloaded = loadSettings(persistedSettings(settings));
   assert.equal(reloaded.rememberApiKeys, false);
   for (const connection of Object.values(reloaded.connections)) assert.equal(connection.apiKey, '');

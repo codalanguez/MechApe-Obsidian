@@ -72,8 +72,36 @@ export function loadSettings(raw: unknown): Settings {
 // in memory, but cannot be persisted by unrelated settings changes.
 export function persistedSettings(settings: Settings): Settings {
   const data = structuredClone(settings);
-  if (!data.rememberApiKeys) {
-    for (const connection of Object.values(data.connections)) connection.apiKey = '';
-  }
+  for (const connection of Object.values(data.connections)) connection.apiKey = '';
   return data;
+}
+
+type KeyStore = { getSecret(id: string): string | null; setSecret(id: string, value: string): void };
+
+export function storeCredential(store: KeyStore, settings: Settings, provider: Provider): void {
+  const id = 'mechape-' + provider + '-credential';
+  const { baseUrl, apiKey } = settings.connections[provider];
+  const value = settings.rememberApiKeys && apiKey ? JSON.stringify({ baseUrl, apiKey }) : '';
+  if ((store.getSecret(id) ?? '') !== value) store.setSecret(id, value);
+}
+
+export function restoreCredentials(store: KeyStore, settings: Settings): boolean {
+  let migrated = false;
+  for (const provider of Object.keys(PROVIDERS) as Provider[]) {
+    const connection = settings.connections[provider];
+    if (connection.apiKey) {
+      storeCredential(store, settings, provider);
+      migrated = true;
+    } else if (settings.rememberApiKeys) {
+      const value = store.getSecret('mechape-' + provider + '-credential');
+      if (!value) continue;
+      try {
+        const saved = objectValue(JSON.parse(value) as unknown);
+        if (saved.baseUrl === connection.baseUrl && typeof saved.apiKey === 'string') connection.apiKey = saved.apiKey;
+      } catch { /* An invalid entry requires re-entering the key. */ }
+    } else {
+      storeCredential(store, settings, provider);
+    }
+  }
+  return migrated;
 }

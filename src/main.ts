@@ -1,8 +1,9 @@
 import { objectValue, stringValue } from './validation';
-import { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, Modal, Notice, TFile, TFolder, MarkdownRenderer, requestUrl, Platform, type App, type SettingDefinitionItem } from 'obsidian';
-import { loadSettings, persistedSettings, PROVIDERS, type Settings, type Provider, type Skill } from './config';
-import { listModels, safeErrorData, type Message, type Transport } from './providers';
+import { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, Modal, Notice, TFile, TFolder, MarkdownRenderer, Platform, type App, type SettingDefinitionItem } from 'obsidian';
+import { loadSettings, persistedSettings, restoreCredentials, storeCredential, PROVIDERS, type Settings, type Provider, type Skill } from './config';
+import { listModels, type Message } from './providers';
 import { VaultTools, safePath, type Change, type VaultAccess } from './vault-tools';
+import { desktopStreamTransport } from './streaming';
 import { runAgent } from './agent';
 import { renderProjectPicker } from './project-picker';
 import { ModelCatalog, renderModelPicker } from './model-picker';
@@ -14,11 +15,7 @@ import { changedLines, providerHelp } from './review';
 import { recoverableReplace, parseRecovery } from './recovery';
 
 const VIEW = 'mechape-chat';
-const transport: Transport = async request => {
-  const result = await requestUrl({ ...request, throw: false });
-  // Do not parse HTML error pages or expose response bodies that may contain credentials.
-  return { status: result.status, json: result.status >= 400 ? safeErrorData(result.text) : JSON.parse(result.text) as unknown };
-};
+const transport = desktopStreamTransport();
 
 class ReviewModal extends Modal {
   private settled = false;
@@ -57,6 +54,7 @@ export default class MechApePlugin extends Plugin {
   historyAvailable = true;
   async onload(): Promise<void> {
     this.settings = loadSettings(await this.loadData() as unknown);
+    if (restoreCredentials(this.app.secretStorage, this.settings)) await this.save();
     const historyPath = `${this.manifest.dir}/history.json`;
     this.history = new HistoryStore(json => this.app.vault.adapter.write(historyPath, json));
     try {
@@ -566,19 +564,22 @@ class MechApeSettings extends PluginSettingTab {
   constructor(app: App, private plugin: MechApePlugin) { super(app, plugin); }
   getSettingDefinitions(): SettingDefinitionItem[] {
     const settings = this.plugin.settings, provider = settings.provider, connection = settings.connections[provider];
+    let keyInput: HTMLInputElement | undefined;
     const selected = settings.skills.find(s => s.id === this.editingSkill) ?? settings.skills[0];
     return [
-      { name: 'Remember API keys', desc: 'Off: keys stay in memory. On: keys are saved in plain text in data.json and may be copied by vault backups or sync.',
-        render: row => { row.addToggle(t => t.setValue(settings.rememberApiKeys).onChange(async value => { settings.rememberApiKeys = value; await this.plugin.save(); })); } },
+      { name: 'Remember API keys', desc: 'Save keys in Obsidian secret storage for the configured provider URL. Turn off to keep keys in this session only.',
+        render: row => { row.addToggle(t => t.setValue(settings.rememberApiKeys).onChange(async value => { settings.rememberApiKeys = value; for (const id of Object.keys(PROVIDERS) as Provider[]) storeCredential(this.app.secretStorage, settings, id); await this.plugin.save(); })); } },
       { name: 'Provider', desc: 'Remote providers receive messages, attachments and note excerpts. Requests occur only when you chat or refresh models.',
         render: row => { row.addDropdown(d => d.addOptions(PROVIDERS).setValue(provider).onChange(async value => {
           if (!Object.hasOwn(PROVIDERS, value)) return;
           settings.provider = value as Provider; this.models = []; this.modelStatus = ''; await this.plugin.save(); this.update();
         })); } },
       { name: 'API base URL', desc: 'Include /v1 or /api/v1 where required. Remote endpoints require HTTPS.',
-        render: row => { row.addText(t => t.setValue(connection.baseUrl).onChange(async value => { connection.baseUrl = value.trim(); this.models = []; await this.plugin.save(); })); } },
-      { name: 'API key', desc: 'Keys remain in memory unless Remember API keys is enabled. Never share saved keys or commit data.json.',
-        render: row => { row.addText(t => { t.inputEl.type = 'password'; t.inputEl.autocomplete = 'off'; t.setValue(connection.apiKey).onChange(async value => { connection.apiKey = value.trim(); await this.plugin.save(); }); }); } },
+        render: row => { row.addText(t => t.setValue(connection.baseUrl).onChange(async value => { if (connection.baseUrl === value.trim()) return;
+          connection.baseUrl = value.trim(); connection.apiKey = ''; if (keyInput) keyInput.value = '';
+          storeCredential(this.app.secretStorage, settings, provider); this.models = []; await this.plugin.save(); })); } },
+      { name: 'API key', desc: 'Keys remain in memory unless Remember API keys is enabled. Changing the API URL clears its key.',
+        render: row => { row.addText(t => { keyInput = t.inputEl; t.inputEl.type = 'password'; t.inputEl.autocomplete = 'off'; t.setValue(connection.apiKey).onChange(async value => { connection.apiKey = value.trim(); storeCredential(this.app.secretStorage, settings, provider); await this.plugin.save(); }); }); } },
       { name: 'Model ID', desc: 'Choose a tool-capable model for note operations, or turn off note tools for plain chat.',
         render: row => { row.addText(t => t.setValue(connection.model).onChange(async value => { connection.model = value.trim(); await this.plugin.save(); })); } },
       { name: 'Available models', desc: this.modelStatus || 'Fetch models from the selected provider.',

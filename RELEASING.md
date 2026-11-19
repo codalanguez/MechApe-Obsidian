@@ -10,7 +10,7 @@ The repository contains source, tests, manifest, version map, license, and relea
 - Verify both light and dark themes, narrow sidebar widths, keyboard operation, and the larger-experience link.
 - The initial release is desktop-only. Validate on Android and iOS before changing `isDesktopOnly` to `false` in a later release.
 - Confirm that the `mechape` plugin ID is available in the Community directory. Change it consistently before first publication if already claimed.
-- Review the README's session-key, optional plain-text key storage, and plain-text history disclosures and ensure no local `data.json`, logs, credentials, or test-vault contents enter the repository or release.
+- Review the README's session-key, optional Obsidian secret storage, and plain-text history disclosures and ensure no local `data.json`, logs, credentials, or test-vault contents enter the repository or release.
 - Run `npm ci`, `npm test`, and `npm run package` from a clean checkout.
 
 ## GitHub release
