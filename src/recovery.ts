@@ -1,4 +1,4 @@
-import { safePath } from './vault-tools';
+import { safePath, VaultAccessError } from './vault-policy';
 import { allowedProject } from './projects';
 
 export function parseRecovery(raw: string, excluded: string): { path: string; before: string; saved: number } | undefined {
@@ -21,7 +21,7 @@ export async function recoverableReplace(before: string, after: string,
   signal?.throwIfAborted();
   await process(current => {
     signal?.throwIfAborted();
-    if (current !== before) throw new Error('The note changed during review. Read it again and make a fresh proposal.');
+    if (current !== before) throw new VaultAccessError('The note changed during review. Read it again and make a fresh proposal.');
     return after;
   });
 }

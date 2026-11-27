@@ -1,8 +1,9 @@
+import { safePath, VaultAccessError } from './vault-policy';
 import { objectValue, stringValue } from './validation';
 import { Plugin, ItemView, WorkspaceLeaf, PluginSettingTab, Setting, Modal, Notice, TFile, TFolder, MarkdownRenderer, Platform, type App, type SettingDefinitionItem } from 'obsidian';
 import { loadSettings, persistedSettings, restoreCredentials, storeCredential, PROVIDERS, type Settings, type Provider, type Skill } from './config';
 import { listModels, type Message } from './providers';
-import { VaultTools, safePath, type Change, type VaultAccess } from './vault-tools';
+import { VaultTools, type Change, type VaultAccess } from './vault-tools';
 import { desktopStreamTransport } from './streaming';
 import { runAgent } from './agent';
 import { renderProjectPicker } from './project-picker';
@@ -100,7 +101,7 @@ export default class MechApePlugin extends Plugin {
   }
   access(): VaultAccess {
     const vault = this.app.vault;
-    const file = (path: string): TFile => { const value = vault.getAbstractFileByPath(path); if (!(value instanceof TFile)) throw new Error('Note not found: ' + path); return value; };
+    const file = (path: string): TFile => { const value = vault.getAbstractFileByPath(path); if (!(value instanceof TFile)) throw new VaultAccessError('The note could not be found in the vault.'); return value; };
     return {
       files: () => vault.getMarkdownFiles(), exists: path => !!vault.getAbstractFileByPath(path),
       read: path => vault.read(file(path)),
@@ -112,7 +113,7 @@ export default class MechApePlugin extends Plugin {
         await vault.create(path, content);
       },
       replace: async (path, before, after, signal) => {
-        if (!this.manifest.dir) throw new Error('Plugin recovery directory unavailable');
+        if (!this.manifest.dir) throw new VaultAccessError('The recovery directory is unavailable. The edit requires a recovery copy.');
         await recoverableReplace(before, after, async () => {
           const dir = `${this.manifest.dir}/recovery`;
           if (!await vault.adapter.exists(dir)) await vault.adapter.mkdir(dir);
@@ -136,6 +137,7 @@ export default class MechApePlugin extends Plugin {
         const path = safePath(data.path), original = data.before;
         modal.contentEl.createEl('button', { text: `${path} · ${new Date(Number(data.saved)).toLocaleString()}` }).onclick = async () => {
           try {
+            if (!allowedProject(path, this.settings.excludedFolders)) { new Notice('This note is now excluded.'); return; }
             const access = this.access(); const before = access.exists(path) ? await access.read(path) : null;
             new ReviewModal(this.app, { path, before, after: original }, new AbortController().signal, accepted => {
               if (!accepted) return;
@@ -491,7 +493,9 @@ class ChatView extends ItemView {
   private async exportChat(): Promise<void> {
     if (!this.visible.length || this.controller) { new Notice('Finish a conversation before saving it.'); return; }
     try {
-      const root = safePath(this.plugin.settings.project, true);
+      const { project, excludedFolders } = this.plugin.settings;
+      if (!allowedProject(project, excludedFolders)) { new Notice('Choose a project outside the excluded folders.'); return; }
+      const root = safePath(project, true);
       const path = `${root ? root + '/' : ''}MechApe chat ${new Date().toISOString().replace(/[:.]/g, '-')}.md`;
       const body = '# MechApe chat\n\n' + this.visible.map(m => `## ${m.role}\n\n${m.content}`).join('\n\n');
       await this.plugin.access().create(path, body); new Notice('Chat saved: ' + path);

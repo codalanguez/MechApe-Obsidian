@@ -16,8 +16,10 @@ test('current project preserves selected ancestor or uses active note folder wit
 });
 test('new projects reject hidden, traversal, invalid and excluded paths', () => {
   assert.equal(newProjectPath(' Projects/My novel ', 'Private'), 'Projects/My novel');
-  for (const path of ['', '../Other', '.obsidian/new', 'Projects/.hidden', '/absolute', 'Private/new', 'private/New', 'A:*']) {
+  for (const path of ['', '../Other', '.obsidian/new', 'Projects/.hidden', '/absolute', 'Private/new', 'private/New', 'Private\\New', 'Private./New', 'A:*']) {
     assert.throws(() => newProjectPath(path, 'Private'), path);
   }
   assert.equal(newProjectPath('Private fiction', 'Private'), 'Private fiction');
+  assert.equal(newProjectPath('Long chapter title~2', 'Private'), 'Long chapter title~2');
+  assert.throws(() => newProjectPath('Café/Notes'.normalize('NFD'), 'Café'));
 });

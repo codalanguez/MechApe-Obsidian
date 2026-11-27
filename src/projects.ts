@@ -1,10 +1,10 @@
-import { safePath, within } from './vault-tools';
+import { safePath, within, exclusionKey } from './vault-policy';
 
 export function allowedProject(path: string, excluded: string): boolean {
   try {
-    safePath(path, true);
+    const key = exclusionKey(safePath(path, true));
     return !excluded.split(',').map(s => s.trim()).filter(Boolean)
-      .some(folder => within(path.toLowerCase(), safePath(folder, true).toLowerCase()));
+      .some(folder => within(key, exclusionKey(safePath(folder, true))));
   } catch { return false; }
 }
 

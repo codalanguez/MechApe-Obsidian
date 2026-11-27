@@ -2,7 +2,8 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { DEFAULTS, loadSettings } from '../src/config';
 import { endpoint, makeRequest, parseResponse, safeErrorData, send } from '../src/providers';
-import { VaultTools, safePath, type VaultAccess } from '../src/vault-tools';
+import { safePath } from '../src/vault-policy';
+import { VaultTools, type VaultAccess } from '../src/vault-tools';
 import { runAgent } from '../src/agent';
 
 function fixture(canWrite = true, review: (change: any) => Promise<boolean> = async () => true) {
@@ -20,6 +21,22 @@ function fixture(canWrite = true, review: (change: any) => Promise<boolean> = as
 test('paths reject hidden files, traversal, absolute paths, and non-Markdown', () => {
   for (const path of ['../a.md', 'Projects/../a.md', '.obsidian/a.md', 'C:\\a.md', '/a.md', 'a.txt', 'a//b.md', 'a/.hidden/b.md']) assert.throws(() => safePath(path));
   assert.equal(safePath('Projects\\A.md'), 'Projects/A.md');
+});
+test('vault paths reject ambiguous names and only a deliberately empty folder selects the root', () => {
+  for (const folder of ['/', '\\', 'Projects/Private./Notes', 'Projects/Private /Notes', 'NUL', 'COM1.txt']) {
+    assert.throws(() => safePath(folder, true));
+  }
+  assert.equal(safePath('', true), '');
+});
+test('single-note errors keep adapter diagnostics private and do not enumerate the vault', async () => {
+  const { call, vault } = fixture();
+  let enumerations = 0;
+  vault.files = () => { enumerations++; return []; };
+  vault.read = async () => { throw new Error('private adapter diagnostic'); };
+  const result = await call('read_note', { path: 'Projects/Alpha.md' });
+  assert.equal(result.status, 'error');
+  assert.doesNotMatch(result.message, /private adapter/);
+  assert.equal(enumerations, 0);
 });
 test('project boundary is enforced for listing, search, read and write', async () => {
   const { call, files } = fixture();
